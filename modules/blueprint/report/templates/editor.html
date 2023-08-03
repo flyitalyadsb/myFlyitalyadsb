@@ -1,0 +1,53 @@
+{% extends "bootstrap/base.html" %}
+{% include "favicon.html" %}
+{% block content %}
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8 mb-4">
+                <!-- Barra di ricerca -->
+                <br>
+                <br>
+                <form action="/editor" method="GET" class="form-inline justify-content-center">
+                    <input type="text" class="form-control mr-2" name="icao" placeholder="ICAO">
+                    <button type="submit" class="btn btn-primary">Cerca</button>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <form method="POST" id="edit">
+                    {{ form.hidden_tag() }}
+                    <h2 class="text-center mb-4" id="icao">
+                        {{ (icao if icao else '').upper() | default('UNKNOWN') }}
+                    </h2>
+                    <div class="form-group">
+                        {{ form.reg.label(class="form-control-label") }}
+                        {{ form.reg(class="form-control", placeholder=(aircraft.Registration if aircraft else '') | default('UNKNOWN')) }}
+                    </div>
+                    <div class="form-group">
+                        {{ form.model.label(class="form-control-label") }}
+                        {{ form.model(class="form-control", placeholder=(aircraft.Type if aircraft else '') | default('UNKNOWN')) }}
+                    </div>
+                    <div class="form-group">
+                        {{ form.civmil.label(class="form-control-label") }}
+                        {{ form.civmil(class="form-control", placeholder=(aircraft.Civmil if aircraft else '') | default('UNKNOWN')) }}
+                    </div>
+                    <div class="form-group">
+                        {{ form.operator.label(class="form-control-label") }}
+                        {{ form.operator(class="form-control", placeholder=(aircraft.Operator if aircraft else '') | default('UNKNOWN')) }}
+                    </div>
+                    <div class="form-group text-center">
+                        {{ form.submit(class="btn btn-primary", value="Invia") }}
+                    </div>
+                </form>
+                {% with message = get_flashed_messages() %}
+                    {% if message %}
+                        <div class="success alert-success alert-dismissible show" role="alert">
+                            {{ message[0] }}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+

@@ -1,0 +1,184 @@
+{% include "favicon.html" %}
+<head>
+    <link rel="stylesheet" href="/style.css">
+
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Your code here
+            var dropdownToggle = document.querySelector(".dropdown-toggle");
+
+            if (dropdownToggle) {  // Check if the element exists before attaching an event
+                dropdownToggle.addEventListener("click", function () {
+                    var dropdownContent = document.querySelector(".dropdown-content");
+                    if (dropdownContent.style.display === "none" || !dropdownContent.style.display) {
+                        dropdownContent.style.display = "block";
+                    } else {
+                        dropdownContent.style.display = "none";
+                    }
+                });
+            }
+        });
+
+
+    </script>
+    <title>Report voli</title>
+</head>
+<body>
+
+<p class="centrale display-1">Report voli</p>
+<div class="container mt-5">
+    <p class="display-5">Filtra</p>
+    <form method="post">
+        {{ form.hidden_tag() }}
+        {{ form.BInizio }}
+        <label for="inizio">Data Inizio:</label>
+        {{ form.inizio }}
+        <br>
+        <br>
+        {{ form.BFine }}
+        <label for="fine">Data Fine:</label>
+        {{ form.fine }}
+        <br>
+        <br>
+        {{ form.BIcao }}
+        <label for="icao">ICAO:</label>
+        {{ form.icao }}
+        <br>
+        <br>
+        {{ form.BRegistration }}
+        <label for="Registration">Registrazione:</label>
+        {{ form.Registration }}
+        <br>
+        <br>
+        {{ form.BModello }}
+        <label for="Modello">Modello:</label>
+        {{ form.Modello }}
+        <br>
+        <br>
+        {{ form.BICAOTypeCode }}
+        <label for="ICAOTypeCode">Codice ICAO Modello:</label>
+        {{ form.ICAOTypeCode }}
+        <br>
+        <br>
+        {{ form.BOperator }}
+        <label for="Operator">Operatore:</label>
+        {{ form.Operator }}
+        <br>
+        <br>
+        <div class="custom-dropdown">
+            <button class="dropdown-toggle">
+                <i class="fas fa-info-circle"></i>
+            </button>
+            <div class="dropdown-content">
+                <span class="lead" style="font-size: 0.875em">Seleziona la prima casella per abilitare il controllo militare. Lascia deselezionata la seconda casella per avere gli aerei civili o non ancora classificati, seleziona anche la seconda per avere solo quelli militari.</span>
+            </div>
+        </div>
+        {{ form.BCivMil }}
+        <label for="CivMil">Militare:</label>
+        {{ form.CivMil }}
+        <br>
+        <br>
+
+        <div class="custom-dropdown">
+            <button class="dropdown-toggle">
+                <i class="fas fa-info-circle"></i>
+            </button>
+            <div class="dropdown-content">
+                <span class="lead" style="font-size: 0.875em">Mostra gli aerei ricevuti solo dal tuo ricevitore</span>
+            </div>
+        </div>
+        <label for="only_mine">MyReceiver:</label>
+        {{ form.only_mine }}
+
+
+        <br>
+        <br>
+        <br>
+        <br>
+        {{ form.submit(class="btn btn-primary", value="Cerca") }}
+    </form>
+    <hr>
+
+    {% if voli %}
+        <div id="report_voli " class="table-responsive p-3">
+            {{ pagination.info }}
+            {{ pagination.links }}
+
+            <table class="table-responsive">
+                <thead>
+                <tr>
+                    <th>Registrazione</th>
+                    <th>Icao</th>
+                    <th>Operatore</th>
+                    <th>Modello</th>
+                    <th>Tipo</th>
+                    <th>Civile/Militare</th>
+                    <th>Inizio</th>
+                    <th>Fine</th>
+                    <th>Traccia</th>
+                    <th>Squawk</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for volo in voli %}
+                    <tr>
+                        <td>{{ volo["Registration"] if volo["Registration"] is defined else '' }}</td>
+                        <td>{{ volo["icao"] if volo["icao"] is defined else '' }}</td>
+                        <td>{{ volo["Operator"] if volo["Operator"] is defined else '' }}</td>
+                        <td>{{ volo["Type"] if volo["Type"] is defined else '' }}</td>
+                        <td>{{ volo["ICAOTypeCode"] if volo["ICAOTypeCode"] is defined else '' }}</td>
+                        {% if volo["CivMil"] %}
+                            <td>Militare</td>
+                        {% elif volo["CivMil"] is not defined %}
+                            <td></td>
+                        {% else %}
+                            <td>Civile</td>
+                        {% endif %}
+                        <td>{{ volo["inizio"].strftime('%Y-%m-%d %H:%M:%S') if volo["inizio"] is defined else '' }}</td>
+                        <td>{{ volo["fine"].strftime('%Y-%m-%d %H:%M:%S') if volo["fine"] is defined else '' }}</td>
+                        <td>
+                            <a href="https://mappa.flyitalyadsb.com?icao={{ volo['icao'] }}?showTrace={{ volo.inizio.strftime('%Y-%m-%d') }}"
+                               class="btn btn-sm btn-outline-secondary">Report</a></td>
+                        <td>{{ volo["squawk"] if volo["squawk"] is defined else '' }}</td>
+                    </tr>
+
+                {% endfor %}
+                </tbody>
+            </table>
+            {{ pagination.links }}
+        </div>
+    {% endif %}
+    {% with message = get_flashed_messages() %}
+        {% if message %}
+            <div class="warning alert-warning alert-dismissible show" role="alert">
+                {{ message[0] }}
+            </div>
+        {% endif %}
+    {% endwith %}
+</div>
+
+
+<script>
+    $(function () {
+        $('body').on('click', '.pagination a', function (e) {
+            e.preventDefault();
+            var url = $(this).attr('href');
+            const pageNumber = url.substring(url.indexOf('page=') + 5);
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState === 4 && this.status === 200) {
+                    document.getElementById("report_voli").innerHTML = this.responseText;
+                }
+            }
+            xhttp.open("GET", "/report_table?page=" + pageNumber, true);
+            xhttp.send();
+
+        });
+    });
+</script>

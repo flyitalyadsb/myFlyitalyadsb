@@ -1,0 +1,95 @@
+<head>
+    <title>myFlyitalyadsb</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+</head>
+
+<style>
+    a {
+        text-decoration: none;
+        font-style: italic;
+        font-size: smaller;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    *:focus {
+        outline: none;
+    }
+
+    body {
+        font-family: Arial;
+        background-color: #3498DB;
+        padding: 50px;
+    }
+
+    .login {
+        margin: 20px auto;
+        width: 300px;
+    }
+
+    .login-screen {
+        background-color: #FFF;
+        padding: 20px;
+        border-radius: 5px
+    }
+
+    .app-title {
+        text-align: center;
+        color: #777;
+    }
+
+    .control-group {
+        margin-bottom: 10px;
+    }
+
+    input {
+        text-align: center;
+        background-color: #ECF0F1;
+        border: 2px solid transparent;
+        border-radius: 3px;
+        font-size: 16px;
+        font-weight: 200;
+        padding: 10px 0;
+        width: 250px;
+        transition: border .5s;
+    }
+
+    input:focus {
+        border: 2px solid #3498DB;
+        box-shadow: none;
+    }
+
+
+</style>
+<link rel="stylesheet" href="/style.css" type="text/css">
+
+<form action="/login" method="POST">
+    <div class="login">
+        <div class="login-screen">
+            <div class="app-title">
+                <h1>myFlyitalyadsb</h1>
+            </div>
+            <div class="control-group">
+                {{ form.hidden_tag() }}
+                {{ form.uuid() }}
+
+            </div>
+            {{ form.submit() }}
+            <br>
+            <a href="https://flyitalyadsb.com/guida-statistiche">Non conosci la tua uuid?</a>
+            {% with message = get_flashed_messages() %}
+                {% if message %}
+                    <div class="success alert-success alert-dismissible show" role="alert">
+                        {{ message[0] }}
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+    </div>
+</form>
+
