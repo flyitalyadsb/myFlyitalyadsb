@@ -4,10 +4,11 @@ from wtforms.validators import DataRequired
 
 
 class MenuForm(FlaskForm):
-    Mappa = SubmitField('Mappa')
+    Mappa = SubmitField('Mappa generale')
+    Mappa_my = SubmitField('La mia mappa')
     Report = SubmitField('Report')
     Sito = SubmitField('Fly Italy Adsb')
-    Statistiche = SubmitField('Statistiche')
+    Grafici = SubmitField('Grafici')
 
 
 class EditForm(FlaskForm):

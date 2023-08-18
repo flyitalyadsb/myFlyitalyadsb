@@ -17,6 +17,7 @@ from modules.blueprint.commonMy.commonMy import commonMy_bp
 from modules.blueprint.live.live import live_bp
 from modules.blueprint.report.report import report_bp
 from modules.blueprint.utility.utility import utility_bp
+from modules.blueprint.mappa_personale.mappa_personale import mappa_bp
 from modules.clients.clients import clients
 from utility.config import SECRET_KEY, FIRST_TIME
 from utility.model import db, SessionData
@@ -88,9 +89,12 @@ def create_app():
     app.register_blueprint(report_bp)
     app.register_blueprint(utility_bp)
     app.register_blueprint(commonMy_bp)
+    app.register_blueprint(mappa_bp, url_prefix="/mappa")
     app.session_interface = SQLSessionInterface()
     if platform.system() != "Windows":
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+        import uvloop
+        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     return app
 
 
@@ -121,18 +125,18 @@ def flask_thread():
     if platform.system() != "Windows":
         app.run(host="0.0.0.0", port=83, debug=False)
     else:
-        app.run(host="localhost", port=83, debug=False)
+        app.run(host="localhost", port=830, debug=False)
 
 
 async def run():
-    # asyncio.get_event_loop().set_debug(True)
+    asyncio.get_event_loop().set_debug(True)
     if platform.system() == "Windows":
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     logger.warning("Dipendenze in partenza...")
 
     with app.app_context():
         await asyncio.gather(query_updater.update_db(), query_updater.update_query(True))
-    logger.info("Primi await completati, ora partono gli h24 ma prima dormiamo mezzo secondino")
+    logger.info("Primi await completati, ora partono gli h24")
     logger.info("Facciamo partire Flask")
     asyncio.create_task(asyncio.to_thread(flask_thread))
     with app.app_context():
@@ -142,5 +146,3 @@ async def run():
 
 
 asyncio.run(run())
-
-#TODO DEFAULT VALUE IN INDEX.HTML,

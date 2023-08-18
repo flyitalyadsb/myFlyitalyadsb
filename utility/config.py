@@ -18,12 +18,12 @@ CLIENTS_MLAT_JSON = "/mlat/clients.json"
 DB_OPEN_DIR = "../dati/"
 DB_OPEN_ZIP = "/dati/open.zip"
 if platform.system() == "Windows":
-    AIRCRAFT_JSON = "./json/aircraft.json"
-    CLIENTS_JSON = "./json/clients.json"
-    RECEIVERS_JSON = "./json/ingest/receivers.json"
-    CLIENTS_MLAT_JSON = "./mlat/clients.json"
-    DB_OPEN_ZIP = "./dati/open.zip"
-    DB_OPEN_DIR = "../dati/"
+    AIRCRAFT_JSON = "./windows/json/aircraft.json"
+    CLIENTS_JSON = "./windows/json/clients.json"
+    RECEIVERS_JSON = "./windows/json/ingest/receivers.json"
+    CLIENTS_MLAT_JSON = "./windows/mlat/clients.json"
+    DB_OPEN_ZIP = "./windows/dati/open.zip"
+    DB_OPEN_DIR = "../windows/dati/"
     TIMEOUT = 5
 
 URL_OPEN = "https://opensky-network.org/datasets/metadata/aircraftDatabase.zip"

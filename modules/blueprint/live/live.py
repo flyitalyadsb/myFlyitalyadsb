@@ -1,5 +1,5 @@
 import aiohttp
-from flask import Blueprint, render_template, session, redirect, request, jsonify, flash
+from flask import Blueprint, render_template, session, redirect, request, jsonify, flash, url_for
 from utility.forms import MenuForm, SliderForm, OnlyMine
 from utility.model import Ricevitore
 import platform
@@ -22,13 +22,15 @@ def index():
     posizione = SliderForm()
     mio = OnlyMine()
     if form.validate_on_submit():
-        if form.Mappa.data:
+        if form.Mappa_my.data:
+            return redirect("/mappa")  # TODO riuscire a mettere url to funzione mappa
+        elif form.Mappa.data:
             return redirect("https://mappa.flyitalyadsb.com")
         elif form.Report.data:
             return redirect("/report")  # TODO riuscire a mettere url to funzione report
         elif form.Sito.data:
             return redirect("https://flyitalyadsb.com")
-        elif form.Statistiche.data:
+        elif form.Grafici.data:
             return redirect("https://statistiche.flyitalyadsb.com")
     user: Ricevitore = session["ricevitore"]
     if not user.lon:

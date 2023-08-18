@@ -1,5 +1,5 @@
 import asyncio
-import platform
+import logging
 from functools import wraps
 
 from flask import Blueprint, session, render_template, abort, request, flash, redirect, url_for
@@ -10,7 +10,7 @@ from utility.model import Ricevitore
 
 commonMy_bp = Blueprint('commonMy_bp', __name__, template_folder='templates',
                         static_folder='static')  # static_url_path='assets'
-
+commonMy_bp.logger = logging.getLogger(__name__)
 
 def human_required(f):
     @wraps(f)
@@ -62,12 +62,12 @@ def dologin():
         uuid = request.args.get('uuid', default=False)
         uuid = uuid if uuid else form.uuid.data
         check_exist = Ricevitore.query.filter_by(uuid=uuid).first()
-        print(check_exist)
+        commonMy_bp.logger.info(check_exist)
         if check_exist:
             session['logged_in'] = True
             session['uuid'] = uuid
         else:
-            flash('UUID o nome utente errato', 'warning')
+            flash('UUID errata', 'warning')
             return render_template("login.html", form=form)
 
         #if platform == "Windows":

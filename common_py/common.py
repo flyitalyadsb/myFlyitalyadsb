@@ -13,7 +13,7 @@ import aiofiles
 import zipfile
 from io import BytesIO
 from typing import List
-
+from copy import deepcopy
 aircraft_cache = LRUCache(maxsize=100000000)
 
 logger = logging.getLogger("common")
@@ -31,6 +31,7 @@ class QueryUpdater:
         self.icao_presenti_nel_db: List = []  # elenco icao di cui abbiamo salvato informazioni nel nostro db
         self.data: AircraftsJson | {} = {}  # aircrafts.json
         self.aircrafts: List[AircraftDataRaw] = []  # aircrafts di aircrafts.json
+        self.aircrafts_raw: List[AircraftDataRaw] = []  # aircrafts di aircrafts.json
         self.database_open: dict[str:DbDizionario] = {}  # database opensky
         self.reports: List = []
         self.aircrafts_da_servire: List[int, dict, bool] = [0, {},
@@ -56,20 +57,28 @@ class QueryUpdater:
         if data:
             logger.debug("using readsb")
             self.data = data
-            self.aircrafts = data["aircraft"]
+            self.aircrafts = deepcopy(self.data["aircraft"])
+            self.aircrafts_raw = self.data["aircraft"]
+
             logger.debug("Readsb webser Online, using it")
         else:
             logger.info("usign aircrafts.json")
             async with aiofiles.open(AIRCRAFT_JSON, 'r') as file:
                 content = await file.read()
                 self.data = json.loads(content)
-                self.aircrafts = self.data["aircraft"]
+                self.aircrafts = deepcopy(self.data["aircraft"])
+                self.aircrafts_raw = self.data["aircraft"]
+
             logger.info("used aircrafts.json")
 
-    async def aicrafts_filtered_by_my_receiver(self):
+    async def aicrafts_filtered_by_my_receiver(self, my=False):
         filtered_aircrafts = []
         ricevitore: Ricevitore = session["ricevitore"]
-        for aircraft in self.aircrafts:
+        if my:
+            aircrafts = self.aircrafts_raw
+        else:
+            aircrafts = self.aircrafts
+        for aircraft in aircrafts:
             if "recentReceiverIds" in aircraft and ricevitore.uuid in aircraft["recentReceiverIds"]:
                 filtered_aircrafts.append(aircraft)
         return filtered_aircrafts
