@@ -5,22 +5,19 @@ SECRET_KEY = os.urandom(32)
 
 FIRST_TIME = False
 
-# timeout richiesta readsb api
-TIMEOUT = 3
 
 
 #path
 AIRCRAFT_JSON = "/json/aircraft.json"
-CLIENTS_JSON = "/json/clients.json"
 RECEIVERS_JSON = "/json/ingest/receivers.json"
 CLIENTS_MLAT_JSON = "/mlat/clients.json"
-
 DB_OPEN_DIR = "../dati/"
 DB_OPEN_ZIP = "/dati/open.zip"
+TIMEOUT = 3
+
 if platform.system() == "Windows":
     AIRCRAFT_JSON = "./windows/json/aircraft.json"
-    CLIENTS_JSON = "./windows/json/clients.json"
-    RECEIVERS_JSON = "./windows/json/ingest/receivers.json"
+    RECEIVERS_JSON = "./windows/json/receivers.json"
     CLIENTS_MLAT_JSON = "./windows/mlat/clients.json"
     DB_OPEN_ZIP = "./windows/dati/open.zip"
     DB_OPEN_DIR = "../windows/dati/"

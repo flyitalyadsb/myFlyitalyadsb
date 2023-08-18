@@ -104,12 +104,12 @@ def setup_database(app):
         db.session.commit()
         if FIRST_TIME:
             init()
-        else:
-            upgrade()
+        #else:
+        #    upgrade()
 
 
 app = create_app()
-Migrate(app, db)
+#Migrate(app, db)
 setup_database(app)
 bootstrap = Bootstrap(app)
 
@@ -123,12 +123,14 @@ logger.addHandler(sh)
 def flask_thread():
     app.logger.info("Flask in partenza!")
     if platform.system() != "Windows":
-        app.run(host="0.0.0.0", port=83, debug=False)
+        app.run(host="0.0.0.0", port=83, debug=False)   # DEBUG DEVE RIMANERE SU FALSE, ALTRIMENTI SIGNAL FA CRASHARE
     else:
-        app.run(host="localhost", port=830, debug=False)
+        app.run(host="localhost", port=830, debug=False) # DEBUG DEVE RIMANERE SU FALSE
 
+logging.basicConfig(level=logging.DEBUG)
 
 async def run():
+
     asyncio.get_event_loop().set_debug(True)
     if platform.system() == "Windows":
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -143,6 +145,7 @@ async def run():
         with db.session.no_autoflush:
             logger.info("Si parte ciurma!")
             await asyncio.gather(add_aircrafts_to_db(), query_updater.update_query(), clients())
+
 
 
 asyncio.run(run())

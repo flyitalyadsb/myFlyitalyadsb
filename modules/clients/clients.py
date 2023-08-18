@@ -1,5 +1,8 @@
 import asyncio
 import aiofiles
+import aiohttp
+import requests
+
 from utility.config import RECEIVERS_JSON, CLIENTS_MLAT_JSON, UPDATE_CLIENTS
 import json
 from common_py.common import query_updater
