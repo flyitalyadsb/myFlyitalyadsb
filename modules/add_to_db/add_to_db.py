@@ -29,7 +29,6 @@ async def add_to_db(aircraft, now):
 
     db.session.add(volo)
 
-
 async def add_aircrafts_to_db():
     """
     Aggiunge gli aerei al database
@@ -56,6 +55,16 @@ async def add_aircrafts_to_db():
                     await add_to_db(aircraft, now)
 
             else:
+                logger.warning(f"no id: {aircraft}")
                 print(aircraft)
         db.session.commit()
         await asyncio.sleep(5)
+
+if __name__ == '__main__':
+    from tempo_reale import app, debug
+    with app.app_context():
+        with db.session.no_autoflush:
+            if debug:
+                asyncio.get_event_loop().set_debug(True)
+
+            asyncio.run(add_aircrafts_to_db())

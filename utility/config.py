@@ -10,14 +10,20 @@ FIRST_TIME = False
 #path
 AIRCRAFT_JSON = "/json/aircraft.json"
 RECEIVERS_JSON = "/json/ingest/receivers.json"
+CLIENTS_JSON = "/json/ingest/clients.json"
+
+SYNC_JSON = "/mlat/sync.json"
 CLIENTS_MLAT_JSON = "/mlat/clients.json"
 DB_OPEN_DIR = "../dati/"
 DB_OPEN_ZIP = "/dati/open.zip"
 TIMEOUT = 3
+FREQUENZA_AGGIORNAMENTO_AEREI = 0.2
 
 if platform.system() == "Windows":
     AIRCRAFT_JSON = "./windows/json/aircraft.json"
-    RECEIVERS_JSON = "./windows/json/receivers.json"
+    RECEIVERS_JSON = "./windows/json/ingest/receivers.json"
+    CLIENTS_JSON = "./windows/json/ingest/clients.json"
+    SYNC_JSON = "./windows/mlat/sync.json"
     CLIENTS_MLAT_JSON = "./windows/mlat/clients.json"
     DB_OPEN_ZIP = "./windows/dati/open.zip"
     DB_OPEN_DIR = "../windows/dati/"

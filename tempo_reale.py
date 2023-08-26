@@ -79,6 +79,8 @@ def create_app():
     app = Flask(__name__)
     app.config["FLASK_APP"] = "tempo_reale.py"
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tempo_reale.sqlite'
+
+
     app.config['SECRET_KEY'] = SECRET_KEY
     app.config["WTF_CSRF_SECRET_KEY"] = SECRET_KEY
     app.config["SESSION_PERMANENT"] = False
@@ -129,13 +131,25 @@ def flask_thread():
 
 logging.basicConfig(level=logging.DEBUG)
 
+def run_in_thread():
+    # Esegui il tuo codice qui
+    with app.app_context():
+        with db.session.no_autoflush:
+            # chiamata al database o altre operazioni
+            add_aircrafts_to_db()
+debug = True
 async def run():
-
-    asyncio.get_event_loop().set_debug(True)
+    if debug:
+        asyncio.get_event_loop().set_debug(True)
+        """
+        with app.app_context():
+            with db.session.no_autoflush:
+                await clients()
+                return
+        """
     if platform.system() == "Windows":
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     logger.warning("Dipendenze in partenza...")
-
     with app.app_context():
         await asyncio.gather(query_updater.update_db(), query_updater.update_query(True))
     logger.info("Primi await completati, ora partono gli h24")
@@ -143,8 +157,11 @@ async def run():
     asyncio.create_task(asyncio.to_thread(flask_thread))
     with app.app_context():
         with db.session.no_autoflush:
+            loop = asyncio.get_running_loop()
+            future = loop.run_in_executor(None, run_in_thread)
             logger.info("Si parte ciurma!")
-            await asyncio.gather(add_aircrafts_to_db(), query_updater.update_query(), clients())
+            await asyncio.gather(query_updater.update_query(), clients())
+
 
 
 

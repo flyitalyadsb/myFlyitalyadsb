@@ -7,6 +7,7 @@ from user_agents import parse
 
 from utility.forms import LoginForm
 from utility.model import Ricevitore
+from common_py.common import query_updater
 
 commonMy_bp = Blueprint('commonMy_bp', __name__, template_folder='templates',
                         static_folder='static')  # static_url_path='assets'
@@ -60,9 +61,8 @@ def dologin():
     if (request.method == 'POST' and form.validate_on_submit()) or (request.method == 'GET' and request.args.get('uuid',
                                                                                                               default=False)):
         uuid = request.args.get('uuid', default=False)
-        uuid = uuid if uuid else form.uuid.data
+        uuid = uuid.lower() if uuid else form.uuid.data
         check_exist = Ricevitore.query.filter_by(uuid=uuid).first()
-        commonMy_bp.logger.info(check_exist)
         if check_exist:
             session['logged_in'] = True
             session['uuid'] = uuid

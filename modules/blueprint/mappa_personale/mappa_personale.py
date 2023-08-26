@@ -33,7 +33,8 @@ async def chunks():
 @mappa_bp.route("/data/aircraft.json")
 async def aircrafts():
     aircrafts_json = await query_updater.aicrafts_filtered_by_my_receiver(my=True)
-    json_aircraft = {"messages": 0, "now": time.time(), "aircraft": aircrafts_json}
+    ricevitore: Ricevitore = session["ricevitore"]
+    json_aircraft = {"messages": ricevitore.messaggi_al_sec if ricevitore.messaggi_al_sec else 0, "now": time.time(), "aircraft": aircrafts_json}
     return jsonify(json_aircraft)
 
 
@@ -70,8 +71,11 @@ def osm_tiles_offline(osm):
 @cache(max_age=7776000, public=True)
 @inflate
 def libs(lib):
-    return send_file(path + "/libs/" + lib)
-
+    try:
+        return send_file(path + "/libs/" + lib)
+    except:
+        mappa_bp.logger.info(f"{lib} non trovato")
+        abort(404)
 
 @login_required
 @mappa_bp.route("/style/<style>")

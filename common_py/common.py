@@ -1,7 +1,7 @@
 import logging
 import time
 import aiohttp
-from utility.config import TIMEOUT, AIRCRAFT_JSON, URL_OPEN, DB_OPEN_DIR, DB_OPEN_ZIP, DB_OPEN, URL_READSB, UNIX_SOCKET, UNIX
+from utility.config import TIMEOUT, AIRCRAFT_JSON, URL_OPEN, DB_OPEN_DIR, DB_OPEN_ZIP, DB_OPEN, URL_READSB, UNIX_SOCKET, UNIX, FREQUENZA_AGGIORNAMENTO_AEREI
 import json
 from utility.model import Aereo, Ricevitore
 from utility.type_hint import AircraftDataRaw, DbDizionario, AircraftsJson
@@ -17,7 +17,6 @@ from copy import deepcopy
 aircraft_cache = LRUCache(maxsize=100000000)
 
 logger = logging.getLogger("common")
-
 
 def unzip_data(data):
     with BytesIO(data) as bio, zipfile.ZipFile(bio) as zip_file:
@@ -62,7 +61,7 @@ class QueryUpdater:
 
             logger.debug("Readsb webser Online, using it")
         else:
-            logger.info("usign aircrafts.json")
+            logger.debug("using aircrafts.json")
             async with aiofiles.open(AIRCRAFT_JSON, 'r') as file:
                 content = await file.read()
                 self.data = json.loads(content)
@@ -79,7 +78,7 @@ class QueryUpdater:
         else:
             aircrafts = self.aircrafts
         for aircraft in aircrafts:
-            if "recentReceiverIds" in aircraft and ricevitore.uuid in aircraft["recentReceiverIds"]:
+            if "recentReceiverIds" in aircraft and ricevitore.uuid[:18] in aircraft["recentReceiverIds"]:
                 filtered_aircrafts.append(aircraft)
         return filtered_aircrafts
 
@@ -98,7 +97,7 @@ class QueryUpdater:
                 self.reader, self.writer = await asyncio.open_unix_connection(UNIX_SOCKET)
             while True:
                 await self.real_update_query()
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(FREQUENZA_AGGIORNAMENTO_AEREI)
 
     async def download_file(self, url: str, destination: str) -> None:
         async with aiohttp.ClientSession() as session:

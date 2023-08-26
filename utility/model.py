@@ -76,6 +76,14 @@ class Volo_rep():
         }
 
 
+ricevitore_peers_association = db.Table('ricevitore_peers',
+                                        db.Column('ricevitore_id', db.Integer, db.ForeignKey('ricevitore.id'),
+                                                  primary_key=True),
+                                        db.Column('peer_id', db.Integer, db.ForeignKey('ricevitore.id'),
+                                                  primary_key=True)
+                                        )
+
+
 class Ricevitore(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(40))
@@ -92,21 +100,13 @@ class Ricevitore(db.Model):
     lon = db.Column(db.Float)
     linked = db.Column(db.Boolean, default=False)  # è collegato a mlat-server
     session_data = db.relationship('SessionData', back_populates='ricevitore')
-
-
-
-
-class Client(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(db.Uuid(22), unique=True, nullable=True)
-    host_port = db.Column(db.String, nullable=False)
-    avg_kbps = db.Column(db.Float, nullable=False)
-    conn_time_s = db.Column(db.Float, nullable=False)
-    messages_per_s = db.Column(db.Float, nullable=False)
-    positions_per_s = db.Column(db.Float, nullable=False)
-    # reduce_signal = db.Column(db.Boolean, default=False)
-    recent_rtt_ms = db.Column(db.Float, nullable=True)
-    position_counter = db.Column(db.BigInteger, nullable=False)
+    ip = db.Column(db.String(40))
+    messaggi_al_sec = db.Column(db.Integer)
+    peers = db.relationship('Ricevitore',
+                            secondary=ricevitore_peers_association,
+                            primaryjoin=id == ricevitore_peers_association.c.ricevitore_id,
+                            secondaryjoin=id == ricevitore_peers_association.c.peer_id,
+                            backref='connected_to')
 
 
 class SessionData(db.Model):
@@ -114,6 +114,3 @@ class SessionData(db.Model):
     data = db.Column(db.PickleType)  # Memorizziamo i dati della sessione serializzati
     ricevitore_uuid = db.Column(db.Integer, db.ForeignKey('ricevitore.uuid'))
     ricevitore = db.relationship('Ricevitore', back_populates='session_data')
-
-
-

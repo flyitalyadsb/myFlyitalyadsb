@@ -8,7 +8,8 @@
 <link rel="stylesheet" href="/style.css">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 
 <p id="benvenuto" class="display-1 p-3">Aerei in arrivo....</p>
 <br>
@@ -125,11 +126,40 @@
         {% endif %}
     {% endwith %}
 </div>
+
+<div id="mappa"></div>
+
 <div id="report_voli" class="table-responsive pt-0 px-3 m-0"></div>
 
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
+
+    let stazioneCentrale = {{ stazioneCentrale|tojson }};
+    let stazioniCollegate = {{ stazioniCollegate|tojson }};
+
+    let mappa = L.map('mappa').setView([stazioneCentrale.lat, stazioneCentrale.lon], 14);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(mappa);
+
+    // Aggiungi la stazione centrale
+    L.marker([stazioneCentrale.lat, stazioneCentrale.lon]).addTo(mappa)
+        .bindPopup(stazioneCentrale.nome)
+        .openPopup();
+
+    // Aggiungi le stazioni collegate e disegna una linea per collegarle alla stazione centrale
+    stazioniCollegate.forEach(stazione => {
+        L.marker([stazione.lat, stazione.lon]).addTo(mappa)
+            .bindPopup(stazione.nome);
+
+        L.polyline([
+            [stazioneCentrale.lat, stazioneCentrale.lon],
+            [stazione.lat, stazione.lon]
+        ]).addTo(mappa);
+    });
+
 
     function update() {
         $.ajax({
@@ -142,7 +172,7 @@
                 var xhttp = new XMLHttpRequest();
                 xhttp.onreadystatechange = function () {
                     if (this.readyState === 4 && this.status === 200) {
-                        document.getElementById("benvenuto").innerHTML = "My FlyItalyAdsb";
+                        document.getElementById("benvenuto").innerHTML = "My Fly Italy Adsb - {{ ricevitore.name if ricevitore.name else ricevitore.uuid}}";
                         document.getElementById("benvenuto").classList.add("centrale");
                         var elements = document.querySelectorAll('.d-none');
                         elements.forEach(function (element) {
@@ -167,7 +197,7 @@
             var xhttp = new XMLHttpRequest();
             xhttp.onreadystatechange = function () {
                 if (this.readyState === 4 && this.status === 200) {
-                    document.getElementById("benvenuto").innerHTML = "Aerei Visibili in questo momento";
+                    document.getElementById("benvenuto").innerHTML = "My Fly Italy Adsb - {{ ricevitore.name if ricevitore.name else ricevitore.uuid}}";
                     document.getElementById("benvenuto").classList.add("centrale");
                     document.getElementById("menu").classList.remove("d-none");
                     var elements = document.querySelectorAll('.d-none');

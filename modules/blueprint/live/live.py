@@ -32,11 +32,11 @@ def index():
             return redirect("https://flyitalyadsb.com")
         elif form.Grafici.data:
             return redirect("https://statistiche.flyitalyadsb.com")
-    user: Ricevitore = session["ricevitore"]
-    if not user.lon:
+    ricevitore: Ricevitore = session["ricevitore"]
+    if not ricevitore.lon:
         flash("MLAT e FEED non sincronizzati, utilizzo la posizione media degli aerei ricevuti")
         # TODO handle this in the template
-    return render_template('index.html', form=form, posizione=posizione, mio=mio)
+    return render_template('index.html', form=form, posizione=posizione, mio=mio, ricevitore=ricevitore)
 
 
 @live_bp.route("/session/posizione", methods=["POST"])
@@ -147,3 +147,8 @@ async def table_pagination_func():
             key=lambda x: x["info"].Operator if x["info"] is not None and x["info"].Operator is not None else "")
 
     return render_template("table.html", aircrafts=sliced_aircrafts, pagination=pagination)
+
+
+@live_bp.route("/data_raw")
+def all_aircrafts_raw():
+    return jsonify(query_updater.aircrafts_raw)
