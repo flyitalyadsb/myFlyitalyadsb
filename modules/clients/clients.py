@@ -3,12 +3,13 @@ import aiofiles
 from utility.config import RECEIVERS_JSON, CLIENTS_MLAT_JSON, UPDATE_CLIENTS, CLIENTS_JSON, SYNC_JSON
 import json
 from common_py.common import query_updater
-from utility.model import Ricevitore, db
+from utility.model import Ricevitore, SessionLocal
 from shapely.geometry import Point, Polygon
 import logging
-
+from sqlalchemy import select
 
 logger = logging.getLogger(__name__)
+session = SessionLocal()
 
 
 async def clients():
@@ -33,7 +34,8 @@ async def process_clients():
                     sync_mlat = json.loads(content)
                     for receiver_readsb in receiver_readsb:
                         for client_readsb in clients_readsb:
-                            ric: Ricevitore = Ricevitore.query.filter_by(uuid=client_readsb[0]).first()
+                            ric_query = await session.execute(select(Ricevitore).filter_by(uuid=client_readsb[0]))
+                            ric: Ricevitore = ric_query.scalar_one_or_none()
                             if ric:
                                 ric.position_counter = receiver_readsb[1]
                                 ric.timed_out_counter = receiver_readsb[2]
@@ -43,7 +45,7 @@ async def process_clients():
                                 ric.lon_max = receiver_readsb[6]
                                 ric.lat_avg = receiver_readsb[8]
                                 ric.lon_avg = receiver_readsb[9]
-                                #ric.ip = str(client_readsb[1].split("port")[0].replace(" ", "")),
+                                # ric.ip = str(client_readsb[1].split("port")[0].replace(" ", "")),
                                 ric.messaggi_al_sec = client_readsb[4]
                                 if not ric.linked:
                                     for client_mlat in clients_mlat.values():
@@ -52,9 +54,11 @@ async def process_clients():
                                             ric.lon = client_mlat["lon"]
                                             ric.name = client_mlat["user"]
                                             ric.peers = []
-                                            peer_names = [peer for peer in sync_mlat[client_mlat["user"]]["peers"].keys()]
-                                            all_possible_peers = Ricevitore.query.filter(
-                                                Ricevitore.name.in_(peer_names)).all()
+                                            peer_names = [peer for peer in
+                                                          sync_mlat[client_mlat["user"]]["peers"].keys()]
+                                            all_possible_peers_query = await session.execute(
+                                                select(Ricevitore).filter(Ricevitore.name.in_(peer_names)))
+                                            all_possible_peers = all_possible_peers_query.scalars().all()
                                             peer_dict = {peer.name: peer for peer in all_possible_peers}
                                             for ricevitore_name in peer_names:
                                                 peer = peer_dict.get(ricevitore_name)
@@ -69,14 +73,14 @@ async def process_clients():
                                             client_readsb[0][:18]:
                                         peers = []
                                         peer_names = [peer for peer in sync_mlat[client_mlat["user"]]["peers"].keys()]
-                                        all_possible_peers = Ricevitore.query.filter(
-                                            Ricevitore.name.in_(peer_names)).all()
+                                        all_possible_peers_query = await session.execute(select(Ricevitore).filter(Ricevitore.name.in_(peer_names)))
+                                        all_possible_peers = all_possible_peers_query.scalars().all()
                                         peer_dict = {peer.name: peer for peer in all_possible_peers}
                                         for ricevitore_name in peer_names:
                                             peer = peer_dict.get(ricevitore_name)
                                         if peer:
                                             ric.peers.append(peer)
-                                        db.session.add(Ricevitore(
+                                        session.add(Ricevitore(
                                             linked=True,
                                             lat=client_mlat["lat"],
                                             lon=client_mlat["lon"],
@@ -90,14 +94,14 @@ async def process_clients():
                                             lon_max=receiver_readsb[6],
                                             lat_avg=receiver_readsb[8],
                                             lon_avg=receiver_readsb[9],
-                                            #ip=str(client_readsb[1].split("port")[0].replace(" ", "")),
+                                            # ip=str(client_readsb[1].split("port")[0].replace(" ", "")),
                                             messaggi_al_sec=client_readsb[4],
                                             peers=peers
                                         ))
                                         process = False
                                 if process:
                                     if receiver_readsb[0] == client_readsb[0][:18]:
-                                        db.session.add(Ricevitore(
+                                        session.add(Ricevitore(
                                             uuid=client_readsb[0],
                                             position_counter=receiver_readsb[1],
                                             timed_out_counter=receiver_readsb[2],
@@ -107,14 +111,13 @@ async def process_clients():
                                             lon_max=receiver_readsb[6],
                                             lat_avg=receiver_readsb[8],
                                             lon_avg=receiver_readsb[9],
-                                            #ip=str(client_readsb[1].split("port")[0].replace(" ", "")),
+                                            # ip=str(client_readsb[1].split("port")[0].replace(" ", "")),
                                             messaggi_al_sec=client_readsb[4]
                                         ))
 
-
-
-        db.session.commit()
-        query_updater.ricevitori = Ricevitore.query.all()
+        await session.commit()
+        query = await session.execute(select(Ricevitore))
+        query_updater.ricevitori = query
 
 
 start = (0, 0)

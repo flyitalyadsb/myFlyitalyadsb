@@ -5,7 +5,7 @@ SECRET_KEY = os.urandom(32)
 
 FIRST_TIME = False
 
-
+debug = False
 
 #path
 AIRCRAFT_JSON = "/json/aircraft.json"

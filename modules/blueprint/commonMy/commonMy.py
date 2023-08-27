@@ -6,8 +6,9 @@ from flask import Blueprint, session, render_template, abort, request, flash, re
 from user_agents import parse
 
 from utility.forms import LoginForm
-from utility.model import Ricevitore
-from common_py.common import query_updater
+from utility.model import Ricevitore, SessionLocal
+from sqlalchemy import select
+session_db = SessionLocal()
 
 commonMy_bp = Blueprint('commonMy_bp', __name__, template_folder='templates',
                         static_folder='static')  # static_url_path='assets'
@@ -49,7 +50,7 @@ def login_required(f):
 
 
 @commonMy_bp.route('/login', methods=['POST', 'GET'])
-def dologin():
+async def dologin():
     next_page = request.args.get("next_page")
     if request.method == "GET":
         if next_page:
@@ -62,7 +63,8 @@ def dologin():
                                                                                                               default=False)):
         uuid = request.args.get('uuid', default=False)
         uuid = uuid.lower() if uuid else form.uuid.data
-        check_exist = Ricevitore.query.filter_by(uuid=uuid).first()
+        check_exist = await session_db.execute(select(Ricevitore).filter_by(uuid=uuid))
+        check_exist = check_exist.scalar_one_or_none()
         if check_exist:
             session['logged_in'] = True
             session['uuid'] = uuid

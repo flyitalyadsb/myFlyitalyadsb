@@ -4,7 +4,7 @@ from utility.forms import ReportForm, EditForm
 import time
 import logging
 import datetime
-from utility.model import db, Volo_rep
+from utility.model import Volo_rep, SessionData
 from common_py.commonLiveReport import pagination_func
 from common_py.common import query_updater, aircraft_cache
 from modules.blueprint.commonMy.commonMy import login_required
@@ -94,13 +94,13 @@ async def show_or_edit_aircraft():
             aereo_db.Type = model
             aereo_db.CivMil = civmil
             aereo_db.Operator = operator
-            db.session.commit()
+            await SessionData.commit()
             if icao.lower() in aircraft_cache:
                 aircraft_cache.pop(icao.lower())
             flash('Aereo modificato con successo.', 'success')
         else:
-            db.session.add(Aereo(icao=icao.upper(), Registration=reg, Type=model, CivMil=civmil, Operator=operator))
-            db.session.commit()
+            await SessionData.add(Aereo(icao=icao.upper(), Registration=reg, Type=model, CivMil=civmil, Operator=operator))
+            await SessionData.commit()
             if icao.lower() in aircraft_cache:
                 aircraft_cache.pop(icao.lower())
             flash('Aereo aggiunto con successo.', 'success')

@@ -1,16 +1,20 @@
 import aiohttp
-from flask import Blueprint, render_template, session, redirect, request, jsonify, flash, url_for
+from flask import Blueprint, render_template, session, redirect, request, jsonify, flash, render_template_string, make_response
 from utility.forms import MenuForm, SliderForm, OnlyMine
-from utility.model import Ricevitore
+from utility.model import Ricevitore, SessionLocal
 import platform
+import asyncio
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 import logging
 from common_py.commonLiveReport import pagination_func, query_updater
 from modules.blueprint.commonMy.commonMy import login_required
-
+import aiofiles
 live_bp = Blueprint('live_bp', __name__, template_folder='templates',
                     static_folder='static')
 live_bp.logger = logging.getLogger(__name__)
 
+session_db: AsyncSession = SessionLocal()
 
 @live_bp.route("/", methods=["GET", "POST"])
 @login_required
@@ -36,7 +40,35 @@ def index():
     if not ricevitore.lon:
         flash("MLAT e FEED non sincronizzati, utilizzo la posizione media degli aerei ricevuti")
         # TODO handle this in the template
-    return render_template('index.html', form=form, posizione=posizione, mio=mio, ricevitore=ricevitore)
+    return render_template('index.html', form=form, posizione=posizione, mio=mio, ricevitore=ricevitore)\
+
+
+
+path = "modules/blueprint/live/templates"
+
+async def get_peer_info(uuid):
+    query = await session_db.execute(select(Ricevitore).filter_by(uuid=uuid))
+    ric: Ricevitore = query.scalar_one_or_none()
+    return \
+    {
+        'lat': ric.lat if ric.lat else ric.lat_avg,
+        'lon': ric.lon if ric.lon else ric.lon_avg,
+        'nome': ric.name if ric.name else ric.uuid
+    }
+
+@live_bp.route("/config.js", methods=["GET"])
+@login_required
+async def stazioni():
+    async with aiofiles.open(path + "/config.js.jinja2", "r") as f:
+        js_template = await f.read()
+    ricevitore: Ricevitore = session["ricevitore"]
+    rendered_js = render_template_string(js_template,
+                                         stazioneCentrale= await get_peer_info(ricevitore.uuid),
+                                         stazioniCollegate= await asyncio.gather(*(get_peer_info(ricevitore.uuid) for ricevitore in ricevitore.peers))
+    )
+    response = make_response(rendered_js)
+    response.mimetype = 'application/javascript'
+    return response
 
 
 @live_bp.route("/session/posizione", methods=["POST"])
@@ -82,7 +114,7 @@ def disattiva(modalita):
 @live_bp.route("/table")
 @login_required
 async def table_pagination_func():
-    search = request.args.get('search', False).upper()
+    search = request.args.get('search', False).upper() if request.args.get('search', False) else False
     sort_by = request.args.get('sort_by', 'hex')
     if sort_by != "hex":
         session["sort"] = sort_by

@@ -1,18 +1,30 @@
-from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float, Table, PickleType, create_engine
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker, declarative_base, relationship, backref
+from utility.config import debug
 
-db = SQLAlchemy(engine_options={"pool_size": 40})
+DATABASE_URL = "sqlite+aiosqlite:///instance/tempo_reale.sqlite"
+DATABASE_URL_sync = "sqlite:///instance/tempo_reale.sqlite"
+
+engine = create_async_engine(DATABASE_URL, echo=False, future=True)
+engine_sync = create_engine(DATABASE_URL_sync, echo=False, future=True)
+SessionLocal = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False, autoflush=False)
+SessionLocal_sync = sessionmaker(bind=engine_sync, expire_on_commit=False, autoflush=False)
+Base = declarative_base()
+# isolation_level = "READ UNCOMMITTED"
 
 
-class Aereo(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    icao = db.Column(db.String(20), nullable=False)
-    Registration = db.Column(db.String(100))
-    ICAOTypeCode = db.Column(db.String(20))
-    Type = db.Column(db.String(100))
-    CivMil = db.Column(db.Boolean)
-    Operator = db.Column(db.String(80))
-    SerialNumber = db.Column(db.String(80))
-    OperatorIcao = db.Column(db.String(80))
+class Aereo(Base):
+    __tablename__ = "aereo"
+    id = Column(Integer, primary_key=True)
+    icao = Column(String(20), nullable=False)
+    Registration = Column(String(100))
+    ICAOTypeCode = Column(String(20))
+    Type = Column(String(100))
+    CivMil = Column(Boolean)
+    Operator = Column(String(80))
+    SerialNumber = Column(String(80))
+    OperatorIcao = Column(String(80))
 
     def repr(self):
         repr = Aereo_rep(self.id, self.icao, self.Registration, self.ICAOTypeCode, self.Type, self.CivMil,
@@ -30,22 +42,55 @@ class Aereo_rep():
         self.CivMil: bool = CivMil
         self.Operator: str = Operator
 
+ricevitore_peers_association = Table('ricevitore_peers', Base.metadata,
+                                        Column('ricevitore_id', Integer, ForeignKey('ricevitore.id'),
+                                                  primary_key=True),
+                                        Column('peer_id', Integer, ForeignKey('ricevitore.id'),
+                                                  primary_key=True)
+                                        )
 
-ricevitori_voli = db.Table('ricevitori_voli',
-                           db.Column('volo_id', db.Integer, db.ForeignKey('volo.id'), primary_key=True),
-                           db.Column('ricevitore_id', db.Integer, db.ForeignKey('ricevitore.id'), primary_key=True)
-                           )
+class Ricevitore(Base):
+    __tablename__ = "ricevitore"
+    id = Column(Integer, primary_key=True)
+    name = Column(String(40))
+    uuid = Column(String(22), unique=True, nullable=True)
+    position_counter = Column(Float)
+    timed_out_counter = Column(Float)
+    lat_min = Column(Float)
+    lat_max = Column(Float)
+    lon_min = Column(Float)
+    lon_max = Column(Float)
+    lat_avg = Column(Float)
+    lon_avg = Column(Float)
+    lat = Column(Float)
+    lon = Column(Float)
+    linked = Column(Boolean, default=False)
+    session_data = relationship('SessionData', back_populates='ricevitore')
+    ip = Column(String(40))
+    messaggi_al_sec = Column(Integer)
+    peers = relationship('Ricevitore',
+                            secondary=ricevitore_peers_association,
+                            primaryjoin=id == ricevitore_peers_association.c.ricevitore_id,
+                            secondaryjoin=id == ricevitore_peers_association.c.peer_id,
+                            backref='connected_to')
 
 
-class Volo(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    aereo_id = db.Column(db.Integer, db.ForeignKey('aereo.id'), nullable=False)
-    aereo = db.relationship('Aereo', backref='voli')
-    inizio = db.Column(db.String(40))
-    fine = db.Column(db.String(40))
-    squawk = db.Column(db.String(40))
-    traccia_conclusa = db.Column(db.Boolean())
-    ricevitori = db.relationship('Ricevitore', secondary=ricevitori_voli, backref=db.backref('voli', lazy=True))
+class Volo(Base):
+    __tablename__ = "volo"
+    id = Column(Integer, primary_key=True)
+    aereo_id = Column(Integer, ForeignKey('aereo.id'), nullable=False)
+    aereo = relationship('Aereo', backref='voli')
+    inizio = Column(String(40))
+    fine = Column(String(40))
+    squawk = Column(String(40))
+    traccia_conclusa = Column(Boolean())
+
+
+ricevitori_voli = Table('ricevitori_voli', Base.metadata,
+                        Column('volo_id', Integer, ForeignKey('volo.id'), primary_key=True),
+                        Column('ricevitore_id', Integer, ForeignKey('ricevitore.id'), primary_key=True)
+                        )
+Volo.ricevitore = relationship('Ricevitore', secondary=ricevitori_voli, backref=backref('voli', lazy=True))
 
 
 class Volo_rep():
@@ -76,41 +121,9 @@ class Volo_rep():
         }
 
 
-ricevitore_peers_association = db.Table('ricevitore_peers',
-                                        db.Column('ricevitore_id', db.Integer, db.ForeignKey('ricevitore.id'),
-                                                  primary_key=True),
-                                        db.Column('peer_id', db.Integer, db.ForeignKey('ricevitore.id'),
-                                                  primary_key=True)
-                                        )
-
-
-class Ricevitore(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(40))
-    uuid = db.Column(db.String(22), unique=True, nullable=True)
-    position_counter = db.Column(db.Float)
-    timed_out_counter = db.Column(db.Float)
-    lat_min = db.Column(db.Float)
-    lat_max = db.Column(db.Float)
-    lon_min = db.Column(db.Float)
-    lon_max = db.Column(db.Float)
-    lat_avg = db.Column(db.Float)
-    lon_avg = db.Column(db.Float)
-    lat = db.Column(db.Float)
-    lon = db.Column(db.Float)
-    linked = db.Column(db.Boolean, default=False)  # è collegato a mlat-server
-    session_data = db.relationship('SessionData', back_populates='ricevitore')
-    ip = db.Column(db.String(40))
-    messaggi_al_sec = db.Column(db.Integer)
-    peers = db.relationship('Ricevitore',
-                            secondary=ricevitore_peers_association,
-                            primaryjoin=id == ricevitore_peers_association.c.ricevitore_id,
-                            secondaryjoin=id == ricevitore_peers_association.c.peer_id,
-                            backref='connected_to')
-
-
-class SessionData(db.Model):
-    id = db.Column(db.String, primary_key=True)  # Usiamo l'ID della sessione come chiave primaria
-    data = db.Column(db.PickleType)  # Memorizziamo i dati della sessione serializzati
-    ricevitore_uuid = db.Column(db.Integer, db.ForeignKey('ricevitore.uuid'))
-    ricevitore = db.relationship('Ricevitore', back_populates='session_data')
+class SessionData(Base):
+    __tablename__ = "session_data"
+    id = Column(String, primary_key=True)  # Usiamo l'ID della sessione come chiave primaria
+    data = Column(PickleType)  # Memorizziamo i dati della sessione serializzati
+    ricevitore_uuid = Column(Integer, ForeignKey('ricevitore.uuid'))
+    ricevitore = relationship('Ricevitore', back_populates='session_data')

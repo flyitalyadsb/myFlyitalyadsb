@@ -1,10 +1,13 @@
 import logging
 import time
-from utility.model import db, Aereo
+from utility.model import Aereo, SessionLocal
 from utility.type_hint import DbDizionario
 from flask_paginate import Pagination
 from utility.config import PER_PAGE, UPDATE_TOTAL
 from common_py.common import query_updater, aircraft_cache
+from sqlalchemy import select
+
+session = SessionLocal()
 
 async def pagination_func(logger: logging.Logger, page: int, aircrafts: list = query_updater.aircrafts, live=True):
     total = len(aircrafts)
@@ -32,15 +35,16 @@ async def add_aircraft_to_db(aircraft, logger):
         operator = db_data.operator
         serial_number = db_data.serialnumber
         operator_icao = db_data.operatoricao
-        db.session.add(Aereo(icao=icao.upper(), Registration=reg, ICAOTypeCode=type, Type=model, Operator=operator, SerialNumber=serial_number, OperatorIcao=operator_icao))
+        session.add(Aereo(icao=icao.upper(), Registration=reg, ICAOTypeCode=type, Type=model, Operator=operator, SerialNumber=serial_number, OperatorIcao=operator_icao))
     else:
-        db.session.add(Aereo(icao=icao.upper()))
+        session.add(Aereo(icao=icao.upper()))
     return icao
 
 
-def update_cache_for_added_aircrafts(aicraft_da_aggiungere):
+async def update_cache_for_added_aircrafts(aicraft_da_aggiungere):
     for icao in aicraft_da_aggiungere:
-        info: Aereo = Aereo.query.filter_by(icao=icao.upper()).order_by(Aereo.id.desc()).first()
+        info = await session.execute(select(Aereo).filter_by(icao=icao.upper()).order_by(Aereo.id.desc()))
+        info: Aereo = info.scalar_one_or_none()
         aircraft_cache[icao.lower()] = info.repr()
 
 
@@ -58,31 +62,31 @@ async def getINFO_or_add_aircraft_total(logger: logging.Logger, sliced_aircrafts
     if not query_updater.aircrafts_da_servire[2] and time.time() - query_updater.aircrafts_da_servire[0] > UPDATE_TOTAL or s:
         query_updater.aircrafts_da_servire[2] = True
 
-        with db.session.no_autoflush:
-            for aircraft in aircrafts:
-                icao: str = aircraft["hex"]
+        for aircraft in aircrafts:
+            icao: str = aircraft["hex"]
 
-                if icao not in aircraft_cache:
-                    if not icao.upper() in query_updater.icao_presenti_nel_db:
-                        await add_aircraft_to_db(aircraft, logger)
-                        aicraft_da_aggiungere.append(icao)
-                        query_updater.icao_presenti_nel_db.append(icao)
-                    else:
-                        logging.debug(f"{icao} presente nel nostro database ma non nella cache, interroghiamo il ns db")
-                        ac_presenti_nel_db.append(icao)
-                        aicraft_da_aggiungere.append(icao)
+            if icao not in aircraft_cache:
+                if not icao.upper() in query_updater.icao_presenti_nel_db:
+                    await add_aircraft_to_db(aircraft, logger)
+                    aicraft_da_aggiungere.append(icao)
+                    query_updater.icao_presenti_nel_db.append(icao)
+                else:
+                    logging.debug(f"{icao} presente nel nostro database ma non nella cache, interroghiamo il ns db")
+                    ac_presenti_nel_db.append(icao)
+                    aicraft_da_aggiungere.append(icao)
 
-            db.session.commit()
+        await session.commit()
 
-            update_cache_for_added_aircrafts(aicraft_da_aggiungere)
+        await update_cache_for_added_aircrafts(aicraft_da_aggiungere)
 
-            info_l = Aereo.query.filter(Aereo.icao.in_(ac_presenti_nel_db)).all()
+        info_l = await session.execute(select(Aereo).filter(Aereo.icao.in_(ac_presenti_nel_db)))
+        info_l = info_l.scalars().all()
 
-            for ac in info_l:
-                aircraft_cache[ac.icao.lower()] = ac.repr()
+        for ac in info_l:
+            aircraft_cache[ac.icao.lower()] = ac.repr()
 
-            for aircraft in aircrafts:
-                aircraft["info"] = aircraft_cache[aircraft["hex"]]
+        for aircraft in aircrafts:
+            aircraft["info"] = aircraft_cache[aircraft["hex"]]
 
         query_updater.aircrafts_da_servire[1] = aircrafts
         query_updater.aircrafts_da_servire[0] = time.time()

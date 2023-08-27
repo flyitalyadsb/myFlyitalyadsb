@@ -1,9 +1,8 @@
 import logging
-import time
 import aiohttp
 from utility.config import TIMEOUT, AIRCRAFT_JSON, URL_OPEN, DB_OPEN_DIR, DB_OPEN_ZIP, DB_OPEN, URL_READSB, UNIX_SOCKET, UNIX, FREQUENZA_AGGIORNAMENTO_AEREI
 import json
-from utility.model import Aereo, Ricevitore
+from utility.model import Aereo, Ricevitore, SessionLocal
 from utility.type_hint import AircraftDataRaw, DbDizionario, AircraftsJson
 import csv
 from flask import session
@@ -14,9 +13,13 @@ import zipfile
 from io import BytesIO
 from typing import List
 from copy import deepcopy
+from sqlalchemy.future import select
+
 aircraft_cache = LRUCache(maxsize=100000000)
 
 logger = logging.getLogger("common")
+
+
 
 def unzip_data(data):
     with BytesIO(data) as bio, zipfile.ZipFile(bio) as zip_file:
@@ -28,7 +31,7 @@ class QueryUpdater:
         self.reader: asyncio.StreamReader
         self.writer: asyncio.StreamWriter
         self.icao_presenti_nel_db: List = []  # elenco icao di cui abbiamo salvato informazioni nel nostro db
-        self.data: AircraftsJson | {} = {}  # aircrafts.json
+        self.data: AircraftsJson | {} = {}  # aircrafts.jsonngb
         self.aircrafts: List[AircraftDataRaw] = []  # aircrafts di aircrafts.json
         self.aircrafts_raw: List[AircraftDataRaw] = []  # aircrafts di aircrafts.json
         self.database_open: dict[str:DbDizionario] = {}  # database opensky
@@ -37,7 +40,9 @@ class QueryUpdater:
                                                             False]  # timestamp, aircrafts con info, in esecuzione
         self.ricevitori: List[Ricevitore] = []
     async def get_icao_from_db(self):
-        icao_list = [aereo.icao for aereo in Aereo.query.all()]
+        async with SessionLocal() as session_db:
+            quer = await session_db.execute(select(Aereo))
+            icao_list = [aereo.icao for aereo in quer.scalars().all()]
         self.icao_presenti_nel_db = icao_list
 
     async def fetch_data_from_url(self, logger: logging.Logger, url: str, session) -> dict:
