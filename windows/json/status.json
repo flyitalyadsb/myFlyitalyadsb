@@ -1,0 +1,2 @@
+{ "now": 1690659885.0, "uptime": 2615.6,
+"aircraft_with_pos": 1503, "aircraft_without_pos": 117, "aircraft_count_by_type": { "adsb_icao": 741, "adsb_icao_nt": 9, "adsr_icao": 1, "tisb_icao": 0, "adsc": 0, "mlat": 37, "other": 782, "mode_s": 50, "adsb_other": 0, "adsr_other": 0, "tisb_trackfile": 0, "tisb_other": 0, "mode_ac": 0, "unknown": 0} }

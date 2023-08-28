@@ -1,0 +1,357 @@
+version: '3.2'
+volumes:
+  vrsconfig:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '${VRS_CONFIG_PATH}'
+
+services:
+
+  tar1090:
+    build: ./tar1090
+    container_name: tar1090
+    restart: unless-stopped
+    volumes:
+     - ${READSB_DATA_PATH}/json:/json
+     - ${TAR1090_DATA_PATH}/work-dir:/usr/local/share/tar1090/
+     - ${TAR1090_DATA_PATH}/run:/run/tar1090-webroot
+     - ${TAR1090_DATA_PATH}/favicon:/favicon
+
+
+  flarm_ogn:
+    build: ./flarm_ogn
+    container_name: flarm_ogn
+    restart: unless-stopped
+    volumes:
+     - ${FLARM_OGN_DATA_PATH}/src:/src
+
+  mysql:
+    build: ./mysql
+    container_name: mysql
+    restart: unless-stopped
+
+
+  statistiche:
+    build: ./statistiche
+    container_name: statistiche
+    restart: unless-stopped
+    ports:
+     - 82:82
+    volumes:
+     - ${STATISTICHE_DATA_PATH}/src:/src
+     - ${STATISTICHE_DATA_PATH}/dati:/dati
+
+  lista_voli:
+    build: ./lista_voli
+    container_name: lista_voli
+    restart: unless-stopped
+    ports:
+     - 83:83
+    volumes:
+     - lista_voli_vol:/src
+     - ${READSB_DATA_PATH}/json:/json
+     - ${LISTA_VOLI_DATA_PATH}/dati:/dati
+
+
+
+  readsb:
+    build: ./readsb
+    container_name: readsb
+    restart: unless-stopped
+    ports:
+     - 4905:4905
+     - 3034:3034
+     - 3023:3023
+#     - 2000:2000
+     - 30102:30102
+
+    environment:
+     - RECEIVER_OPTIONS=${RECEIVER_OPTIONS}
+     - DECODER_OPTIONS=${DECODER_OPTIONS}
+     - NET_OPTIONS_READSB=${NET_OPTIONS_READSB}
+     - JSON_OPTIONS=${JSON_OPTIONS}
+    volumes: 
+     - ${READSB_DATA_PATH}:/data
+     - ${READSB_DATA_PATH}/globe_history:/var/globe_history
+
+
+ 
+  nginx:
+    build: ./nginx
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+     - 81:80 
+     - 89:89
+    volumes:
+     - ${READSB_DATA_PATH}/globe_history:/var/globe_history
+     - ${TAR1090_DATA_PATH}/run:/run/tar1090-webroot
+     - ${TAR1090_DATA_PATH}/work-dir:/usr/local/share/tar1090/
+     - ${READSB_DATA_PATH}/json:/json
+     - ${COVERAGE_DATA_PATH}:/coverage
+
+
+  graphs1090:
+    image: mikenye/graphs1090:latest
+    tty: true
+    container_name: graphs1090
+    restart: unless-stopped
+
+    volumes:
+      - ${GRAPHS1090_DATA_PATH}/rrd:/var/lib/collectd/rrd
+      - ${READSB_DATA_PATH}/json:/data:ro
+      - ${GRAPHS1090_DATA_PATH}/graphs:/run/graphs1090
+    environment:
+      - TZ=Italy/Rome
+    ports:
+     - 90:80
+
+
+  coverage:
+    build: ./coverage
+    container_name: coverage
+    restart: unless-stopped
+    volumes:
+     - ${COVERAGE_DATA_PATH}:/work-dir
+     - ${MLAT_SERVER_A_WORKDIR_PATH}:/mlat-server-a/work-dir
+     - ${MLAT_SERVER_A_SRC_PATH}:/mlat-server-a/src
+
+  feed1:
+    build: ./feed
+    container_name: feed1
+    restart: unless-stopped
+    environment:
+     - INPUT_IP=${INPUT_IP1}
+     - INPUT_PORT=${INPUT_PORT1}
+     - INPUT_MLAT_IP=${INPUT_MLAT_IP1}
+     - INPUT_MLAT_PORT=${INPUT_MLAT_PORT1}
+     - UTENTE=${UTENTE1}
+     - LATITUDINE=${LATITUDINE1}
+     - LONGITUDINE=${LONGITUDINE1}
+     - ALTITUDINE=${ALTITUDINE1}
+     - FORMAT=${FORMAT1}
+     - MLATSERVER=${MLATSERVER}
+     - INPUT_TYPE=${INPUT_TYPE}
+     - REDUCE_INTERVAL=${REDUCE_INTERVAL}
+     - TARGET=${TARGET}
+     - NET_OPTIONS=${NET_OPTIONS}
+
+  feed2:
+    build: ./feed
+    container_name: feed2
+    restart: unless-stopped
+    environment:
+     - INPUT_IP=${INPUT_IP2}
+     - INPUT_PORT=${INPUT_PORT2}
+     - INPUT_MLAT_IP=${INPUT_MLAT_IP2}
+     - INPUT_MLAT_PORT=${INPUT_MLAT_PORT2}
+     - UTENTE=${UTENTE2}
+     - LATITUDINE=${LATITUDINE2}
+     - LONGITUDINE=${LONGITUDINE2}
+     - ALTITUDINE=${ALTITUDINE2}
+     - FORMAT=${FORMAT2}
+     - MLATSERVER=${MLATSERVER}
+     - INPUT_TYPE=${INPUT_TYPE}
+     - REDUCE_INTERVAL=${REDUCE_INTERVAL}
+     - TARGET=${TARGET}
+     - NET_OPTIONS=${NET_OPTIONS}
+
+  feed3:
+    build: ./feed
+    container_name: feed3
+    restart: unless-stopped
+    environment:
+     - INPUT_IP=${INPUT_IP3}
+     - INPUT_PORT=${INPUT_PORT3}
+     - INPUT_MLAT_IP=${INPUT_MLAT_IP3}
+     - INPUT_MLAT_PORT=${INPUT_MLAT_PORT3}
+     - UTENTE=${UTENTE3}
+     - LATITUDINE=${LATITUDINE3}
+     - LONGITUDINE=${LONGITUDINE3}
+     - ALTITUDINE=${ALTITUDINE3}
+     - FORMAT=${FORMAT3}
+     - MLATSERVER=${MLATSERVER}
+     - INPUT_TYPE=${INPUT_TYPE}
+     - REDUCE_INTERVAL=${REDUCE_INTERVAL}
+     - TARGET=${TARGET}
+     - NET_OPTIONS=${NET_OPTIONS}
+
+  feed4:
+    build: ./feed
+    container_name: feed4
+    restart: unless-stopped
+    environment:
+     - INPUT_IP=${INPUT_IP4}
+     - INPUT_PORT=${INPUT_PORT4}
+     - INPUT_MLAT_IP=${INPUT_MLAT_IP4}
+     - INPUT_MLAT_PORT=${INPUT_MLAT_PORT4}
+     - UTENTE=${UTENTE4}
+     - LATITUDINE=${LATITUDINE4}
+     - LONGITUDINE=${LONGITUDINE4}
+     - ALTITUDINE=${ALTITUDINE4}
+     - FORMAT=${FORMAT4}
+     - MLATSERVER=${MLATSERVER}
+     - INPUT_TYPE=${INPUT_TYPE}
+     - REDUCE_INTERVAL=${REDUCE_INTERVAL}
+     - TARGET=${TARGET}
+     - NET_OPTIONS=${NET_OPTIONS}
+
+  feed5:
+    build: ./feed
+    container_name: feed5
+    restart: unless-stopped
+    environment:
+     - INPUT_IP=${INPUT_IP5}
+     - INPUT_PORT=${INPUT_PORT5}
+     - INPUT_MLAT_IP=${INPUT_MLAT_IP5}
+     - INPUT_MLAT_PORT=${INPUT_MLAT_PORT5}
+     - UTENTE=${UTENTE5}
+     - LATITUDINE=${LATITUDINE5}
+     - LONGITUDINE=${LONGITUDINE5}
+     - ALTITUDINE=${ALTITUDINE5}
+     - FORMAT=${FORMAT5}
+     - MLATSERVER=${MLATSERVER}
+     - INPUT_TYPE=${INPUT_TYPE}
+     - REDUCE_INTERVAL=${REDUCE_INTERVAL}
+     - TARGET=${TARGET}
+     - NET_OPTIONS=${NET_OPTIONS}
+
+  feed6:
+    build: ./feed
+    container_name: feed6
+    restart: unless-stopped
+    environment:
+     - INPUT_IP=${INPUT_IP6}
+     - INPUT_PORT=${INPUT_PORT6}
+     - INPUT_MLAT_IP=${INPUT_MLAT_IP6}
+     - INPUT_MLAT_PORT=${INPUT_MLAT_PORT6}
+     - UTENTE=${UTENTE6}
+     - LATITUDINE=${LATITUDINE6}
+     - LONGITUDINE=${LONGITUDINE6}
+     - ALTITUDINE=${ALTITUDINE6}
+     - FORMAT=${FORMAT6}
+     - MLATSERVER=${MLATSERVER}
+     - INPUT_TYPE=${INPUT_TYPE}
+     - REDUCE_INTERVAL=${REDUCE_INTERVAL}
+     - TARGET=${TARGET}
+     - NET_OPTIONS=${NET_OPTIONS}
+
+  feed7:
+    build: ./feed
+    container_name: feed7
+    restart: unless-stopped
+    environment:
+     - INPUT_IP=${INPUT_IP7}
+     - INPUT_PORT=${INPUT_PORT7}
+     - INPUT_MLAT_IP=${INPUT_MLAT_IP7}
+     - INPUT_MLAT_PORT=${INPUT_MLAT_PORT7}
+     - UTENTE=${UTENTE7}
+     - LATITUDINE=${LATITUDINE7}
+     - LONGITUDINE=${LONGITUDINE7}
+     - ALTITUDINE=${ALTITUDINE7}
+     - FORMAT=${FORMAT7}
+     - MLATSERVER=${MLATSERVER}
+     - INPUT_TYPE=${INPUT_TYPE}
+     - REDUCE_INTERVAL=${REDUCE_INTERVAL}
+     - TARGET=${TARGET}
+     - NET_OPTIONS=${NET_OPTIONS}
+
+  feed8:
+    build: ./feed
+    container_name: feed8
+    restart: unless-stopped
+    environment:
+     - INPUT_IP=${INPUT_IP8}
+     - INPUT_PORT=${INPUT_PORT8}
+     - INPUT_MLAT_IP=${INPUT_MLAT_IP8}
+     - INPUT_MLAT_PORT=${INPUT_MLAT_PORT8}
+     - UTENTE=${UTENTE8}
+     - LATITUDINE=${LATITUDINE8}
+     - LONGITUDINE=${LONGITUDINE8}
+     - ALTITUDINE=${ALTITUDINE8}
+     - FORMAT=${FORMAT8}
+     - MLATSERVER=${MLATSERVER}
+     - INPUT_TYPE=${INPUT_TYPE}
+     - REDUCE_INTERVAL=${REDUCE_INTERVAL}
+     - TARGET=${TARGET}
+     - NET_OPTIONS=${NET_OPTIONS}
+
+  feed9:
+    build: ./feed
+    container_name: feed9
+    restart: unless-stopped
+    environment:
+     - INPUT_IP=${INPUT_IP9}
+     - INPUT_PORT=${INPUT_PORT9}
+     - INPUT_MLAT_IP=${INPUT_MLAT_IP9}
+     - INPUT_MLAT_PORT=${INPUT_MLAT_PORT9}
+     - UTENTE=${UTENTE9}
+     - LATITUDINE=${LATITUDINE9}
+     - LONGITUDINE=${LONGITUDINE9}
+     - ALTITUDINE=${ALTITUDINE9}
+     - FORMAT=${FORMAT9}
+     - MLATSERVER=${MLATSERVER}
+     - INPUT_TYPE=${INPUT_TYPE}
+     - REDUCE_INTERVAL=${REDUCE_INTERVAL}
+     - TARGET=${TARGET}
+     - NET_OPTIONS=${NET_OPTIONS}
+
+  feed10:
+    build: ./feed
+    container_name: feed10
+    restart: unless-stopped
+    environment:
+     - INPUT_IP=${INPUT_IP10}
+     - INPUT_PORT=${INPUT_PORT10}
+     - INPUT_MLAT_IP=${INPUT_MLAT_IP10}
+     - INPUT_MLAT_PORT=${INPUT_MLAT_PORT10}
+     - UTENTE=${UTENTE10}
+     - LATITUDINE=${LATITUDINE10}
+     - LONGITUDINE=${LONGITUDINE10}
+     - ALTITUDINE=${ALTITUDINE10}
+     - FORMAT=${FORMAT10}
+     - MLATSERVER=${MLATSERVER}
+     - INPUT_TYPE=${INPUT_TYPE}
+     - REDUCE_INTERVAL=${REDUCE_INTERVAL}
+     - TARGET=${TARGET}
+     - NET_OPTIONS=${NET_OPTIONS}
+
+
+  mlat-server-a:
+    build: ./mlat-server-a
+    container_name: mlat-server-a
+    restart: unless-stopped
+    ports:
+     - 30100:30100
+     - 32100:32100
+    volumes:
+      - ${MLAT_SERVER_A_WORKDIR_PATH}:/work-dir
+
+
+
+  vrs:
+    image: mikenye/virtualradarserver:latest
+    tty: true
+    container_name: vrs
+    restart: unless-stopped
+    volumes:
+     - vrsconfig:/config
+     - ${VRS_DB_PATH}:/db
+    ports:
+     - 8080:8080
+    environment:
+     - USERNAME=${VRS_ADMIN_USERNAME}
+     - PASSWORD=${VRS_ADMIN_PASSWORD}
+    deploy:
+      resources:
+        limits:
+          cpus: '0.75'
+          memory: 1024M
+        reservations:
+          cpus: '0.10'
+          memory: 256M
+
+
+
