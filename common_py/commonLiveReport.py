@@ -2,7 +2,6 @@ import logging
 import time
 from utility.model import Aereo, SessionLocal
 from utility.type_hint import DbDizionario
-from flask_paginate import Pagination
 from utility.config import PER_PAGE, UPDATE_TOTAL
 from common_py.common import query_updater, aircraft_cache
 from sqlalchemy import select

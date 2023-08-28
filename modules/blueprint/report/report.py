@@ -1,4 +1,3 @@
-from flask import Blueprint, render_template, session, request, flash
 from utility.model import Volo, Aereo
 from utility.forms import ReportForm, EditForm
 import time
@@ -9,17 +8,21 @@ from common_py.commonLiveReport import pagination_func
 from common_py.common import query_updater, aircraft_cache
 from modules.blueprint.commonMy.commonMy import login_required
 from typing import List
+from fastapi import APIRouter, Request
+from fastapi.templating import Jinja2Templates
 
-report_bp = Blueprint('report_bp', __name__, template_folder='templates',
-                      static_folder='static')
+
+report_bp = APIRouter()
+templates = Jinja2Templates(directory="./templates")
 report_bp.logger = logging.getLogger("REPORT")
 
 
 
-@report_bp.route("/report", methods=["GET", "POST"])
+@report_bp.get("/report")
+@report_bp.post("/report")
 @login_required
-async def report():
-    session["selected_page"] = 1
+async def report(request: Request):
+    request.session_data.selected_page = 1
     form = ReportForm()
 
     if form.is_submitted():
@@ -45,11 +48,12 @@ async def report():
             else:
                 form.CivMil.data = query.filter((Aereo.CivMil == None) | (Aereo.CivMil == False))
         if form.only_mine.data:
-            query = query.filter(session["ricevitore"] in Volo.ricevitori)
+            query = query.filter(request.session_data.ricevitore in Volo.ricevitori)
         voli: List[Volo] = query.all()
         if not voli:
             flash('Nessun aereo trovato con questi filtri.', 'warning')
-            return render_template("report.html", form=form)
+            return templates.TemplateResponse('report.html',
+                                              {"request": request, "form": form})
         for volo in voli:
             volo.inizio = datetime.datetime.fromtimestamp(float(volo.inizio))
             volo.fine = datetime.datetime.fromtimestamp(float(volo.fine))
@@ -57,30 +61,30 @@ async def report():
         for volo in voli:
             voli_list.append(Volo_rep(volo).to_dict())
         query_updater.reports.append(voli_list)
-        session["report"] = query_updater.reports.index(voli_list)
+        request.session_data.report = query_updater.reports.index(voli_list)
         sliced_aircrafts, pagination = await pagination_func(logger=report_bp.logger, page=1, aircrafts=voli_list,
                                                              live=False)
-        return render_template("report.html", form=form, voli=sliced_aircrafts, pagination=pagination)
-    return render_template("report.html", form=form)
+        return templates.TemplateResponse('report.html',
+                                          {"request": request, "form": form, "voli":sliced_aircrafts, "pagination":pagination})
 
 
 
-@report_bp.route("/report_table")
+@report_bp.get("/report_table")
 @login_required
-async def report_table_pagination_func():
-    if "report" in session.keys():
-        page = request.args.get("page", type=int)
-        voli = query_updater.reports[session["report"]]
+async def report_table_pagination_func(request: Request, page: int):
+    if request.session_data.report:
+        voli = query_updater.reports[request.session_data.report]
         sliced_aircrafts, pagination = await pagination_func(report_bp.logger, page, voli, False)
-        return render_template("report_table.html", voli_dict=sliced_aircrafts, pagination=pagination)
+        return templates.TemplateResponse('report_table.html',{"request": request, "voli_dict": sliced_aircrafts, "pagination":pagination})
     else:
         return "None"
 
 
 
-@report_bp.route("/editor", methods=["GET", "POST"])
+@report_bp.get("/editor")
+@report_bp.post("/editor")
 @login_required
-async def show_or_edit_aircraft():
+async def show_or_edit_aircraft(request: Request):
     form = EditForm()
     icao = request.args.get('icao')
     aereo_db: Aereo = Aereo.query.filter_by(icao=icao.upper()).first()
@@ -109,4 +113,4 @@ async def show_or_edit_aircraft():
         aircraft = aereo_db.repr()
     else:
         aircraft = None
-    return render_template("editor.html", aircraft=aircraft, form=form, icao=icao)
+    return templates.TemplateResponse('editor.html', {"request": request, "aircraft": aircraft, "form":form, "icao":icao})

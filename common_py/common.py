@@ -5,7 +5,6 @@ import json
 from utility.model import Aereo, Ricevitore, SessionLocal
 from utility.type_hint import AircraftDataRaw, DbDizionario, AircraftsJson
 import csv
-from flask import session
 from cachetools import LRUCache
 import asyncio
 import aiofiles

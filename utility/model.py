@@ -1,16 +1,14 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float, Table, PickleType, create_engine
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float, Table, PickleType, Uuid
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship, backref
-from utility.config import debug
 
 DATABASE_URL = "sqlite+aiosqlite:///instance/tempo_reale.sqlite"
-DATABASE_URL_sync = "sqlite:///instance/tempo_reale.sqlite"
 
 engine = create_async_engine(DATABASE_URL, echo=False, future=True)
-engine_sync = create_engine(DATABASE_URL_sync, echo=False, future=True)
 SessionLocal = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False, autoflush=False)
-SessionLocal_sync = sessionmaker(bind=engine_sync, expire_on_commit=False, autoflush=False)
 Base = declarative_base()
+
+
 # isolation_level = "READ UNCOMMITTED"
 
 
@@ -42,12 +40,14 @@ class Aereo_rep():
         self.CivMil: bool = CivMil
         self.Operator: str = Operator
 
+
 ricevitore_peers_association = Table('ricevitore_peers', Base.metadata,
-                                        Column('ricevitore_id', Integer, ForeignKey('ricevitore.id'),
-                                                  primary_key=True),
-                                        Column('peer_id', Integer, ForeignKey('ricevitore.id'),
-                                                  primary_key=True)
-                                        )
+                                     Column('ricevitore_id', Integer, ForeignKey('ricevitore.id'),
+                                            primary_key=True),
+                                     Column('peer_id', Integer, ForeignKey('ricevitore.id'),
+                                            primary_key=True)
+                                     )
+
 
 class Ricevitore(Base):
     __tablename__ = "ricevitore"
@@ -69,10 +69,10 @@ class Ricevitore(Base):
     ip = Column(String(40))
     messaggi_al_sec = Column(Integer)
     peers = relationship('Ricevitore',
-                            secondary=ricevitore_peers_association,
-                            primaryjoin=id == ricevitore_peers_association.c.ricevitore_id,
-                            secondaryjoin=id == ricevitore_peers_association.c.peer_id,
-                            backref='connected_to')
+                         secondary=ricevitore_peers_association,
+                         primaryjoin=id == ricevitore_peers_association.c.ricevitore_id,
+                         secondaryjoin=id == ricevitore_peers_association.c.peer_id,
+                         backref='connected_to')
 
 
 class Volo(Base):
@@ -124,6 +124,14 @@ class Volo_rep():
 class SessionData(Base):
     __tablename__ = "session_data"
     id = Column(String, primary_key=True)  # Usiamo l'ID della sessione come chiave primaria
+    session_uuid = Column(Uuid)
     data = Column(PickleType)  # Memorizziamo i dati della sessione serializzati
     ricevitore_uuid = Column(Integer, ForeignKey('ricevitore.uuid'))
+    logged_in = Column(Boolean)
+    posizione = Column(Boolean)
+    selected_page = Column(Integer)
+    filter = Column(String)
+    sort = Column(String)
+    only_mine = Column(Boolean)
+    modalita = Column(PickleType)
     ricevitore = relationship('Ricevitore', back_populates='session_data')
