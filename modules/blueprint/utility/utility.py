@@ -1,7 +1,7 @@
 import os
+from fastapi import APIRouter, HTTPException
 
-utility_bp = Blueprint('utility_bp', __name__, template_folder='templates',
-                       static_folder='static')  # static_url_path='assets'
+utility_bp = APIRouter()
 
 
 

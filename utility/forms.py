@@ -1,9 +1,9 @@
-from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, BooleanField, DateField, validators, SelectField, PasswordField
+from wtforms import StringField, SubmitField, BooleanField, DateField, validators, SelectField, PasswordField, form
 from wtforms.validators import DataRequired
+from starlette_wtf import StarletteForm
 
 
-class MenuForm(FlaskForm):
+class MenuForm(StarletteForm):
     Mappa = SubmitField('Mappa generale')
     Mappa_my = SubmitField('La mia mappa')
     Report = SubmitField('Report')
@@ -11,7 +11,7 @@ class MenuForm(FlaskForm):
     Grafici = SubmitField('Grafici')
 
 
-class EditForm(FlaskForm):
+class EditForm(StarletteForm):
     reg = StringField('Registrazione')
     model = StringField('Modello')
     civmil = BooleanField('Militare')
@@ -19,7 +19,7 @@ class EditForm(FlaskForm):
     submit = SubmitField('Modifica')
 
 
-class ReportForm(FlaskForm):
+class ReportForm(StarletteForm):
     BInizio = BooleanField('Data Inizio')
     inizio = DateField('Data Inizio', format='%Y-%m-%d')
     BFine = BooleanField('Data Fine')
@@ -39,13 +39,13 @@ class ReportForm(FlaskForm):
     only_mine = BooleanField("Solo il mio ricevitore")
     submit = SubmitField("Cerca")
 
-class SliderForm(FlaskForm):
+class SliderForm(StarletteForm):
     raggio = StringField('Distanza dalla mia antenna in km', [validators.Optional()])
 
 
-class OnlyMine(FlaskForm):
+class OnlyMine(StarletteForm):
     only_mine = SelectField('Mostra...', choices=("solo i miei dati", "quelli di tutti"))
 
-class LoginForm(FlaskForm):
+class LoginForm(StarletteForm):
     uuid = PasswordField('Uuid', validators=[DataRequired()], render_kw={"placeholder": "Uuid", "class": "login-field"})
     submit = SubmitField('Entra!', render_kw={"class": "btn btn-primary btn-large btn-block"})

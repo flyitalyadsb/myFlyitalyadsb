@@ -74,20 +74,12 @@
                 <h1>myFlyitalyadsb</h1>
             </div>
             <div class="control-group">
-                {{ form.hidden_tag() }}
                 {{ form.uuid() }}
 
             </div>
             {{ form.submit() }}
             <br>
             <a href="https://flyitalyadsb.com/guida-statistiche">Non conosci la tua uuid?</a>
-            {% with message = get_flashed_messages() %}
-                {% if message %}
-                    <div class="success alert-success alert-dismissible show" role="alert">
-                        {{ message[0] }}
-                    </div>
-                {% endif %}
-            {% endwith %}
         </div>
     </div>
     </div>

@@ -5,18 +5,20 @@ from fastapi import FastAPI, Request
 from werkzeug.middleware.proxy_fix import ProxyFix
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from starlette.responses import RedirectResponse
+
 from common_py.common import query_updater
 from modules.add_to_db.add_to_db import add_aircrafts_to_db
-from modules.blueprint.commonMy.commonMy import commonMy_bp
+from modules.blueprint.commonMy.commonMy import commonMy_bp, dologin
 from modules.blueprint.live.live import live_bp
 from modules.blueprint.report.report import report_bp
-from modules.blueprint.utility.utility import utility_bp
+# from modules.blueprint.utility.utility import utility_bp
 from modules.blueprint.mappa_personale.mappa_personale import mappa_bp
 from modules.clients.clients import clients
 from utility.config import debug
-from utility.model import engine, Base, SessionLocal, SessionData
+from utility.model import engine, Base, SessionLocal, SessionData, Ricevitore
 import uvicorn
-from uuid import uuid4
+from uuid import uuid4, UUID
 
 session_db: AsyncSession = SessionLocal()
 
@@ -25,7 +27,7 @@ def create_app():
     app = FastAPI(title=__name__)
     app.include_router(live_bp)
     app.include_router(report_bp)
-    app.include_router(utility_bp)
+    # app.include_router(utility_bp)
     app.include_router(commonMy_bp)
     app.include_router(mappa_bp)
 
@@ -49,26 +51,45 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 
 @app.middleware("http")
 async def my_middleware(request: Request, call_next):
-    # Questa parte viene eseguita prima della route
-    print("Middleware: prima della route")
-    session_uuid = request.cookies.get("session_uuid")
-    if session_uuid:
-        result = await session_db.execute(select(SessionData).filter_by(session_uuid=session_uuid))
-        session = result.scalar_one_or_none()
-        request.session_data: SessionData = session
+    print(request.url.path)
+    # request.url.path not in ["/login"] and (not hasattr(request.state, "session" or not hasattr(request.state.session, "logged_in")) or not request.state.session.logged_in):
+    if not hasattr(request.state, "session"):
+        session = SessionData()
+        session_db.add(session)
+        request.state.session = session
+        response = await dologin(request, next_page=str(request.url))
 
+    else:
+        # Questa parte viene eseguita prima della route
+        print("Middleware: prima della route")
+        session_uuid = request.cookies.get("session_uuid")
+        if session_uuid:
+            session_uuid = UUID(str(session_uuid))
+            result = await session_db.execute(select(SessionData).filter_by(session_uuid=session_uuid))
+            session = result.scalar_one_or_none()
+            request.state.session = session
 
-    response = await call_next(request)  # Questo passa il controllo alla route
+        else:
+            uuid = uuid4()
+            result = await session_db.execute(select(Ricevitore).filter_by(uuid=session_uuid))
+            ric = result.scalar_one_or_none()
+            session = SessionData(session_uuid=uuid)
+            if ric:
+                session.ricevitore = ric
+            request.state.session = session
 
-    if not session_uuid:
-        uuid = uuid4()
-        response.set_cookie(key="session_uuid", value=uuid, httponly=True)
-        session_db.add(SessionData(session_uuid=uuid))
-        await session_db.commit()
+        response = await call_next(request)  # Questo passa il controllo alla route
+
+        if not session_uuid:
+            response.set_cookie(key="session_uuid", value=uuid, httponly=True)
+            session_db.add(session)
+            await session_db.commit()
+    await session_db.commit()
     return response
 
 
-def fastapi_thread():
+
+def fastapi_start():
     app.logger = logging.getLogger("Fastapi")
     app.logger.info("Fastapi in partenza!")
     if platform.system() != "Windows":
@@ -90,7 +111,7 @@ async def run():
     logger.warning("Dipendenze in partenza...")
     logger.info("Primi await completati, ora partono gli h24")
     logger.info("Facciamo partire Flask")
-    asyncio.create_task(asyncio.to_thread(fastapi_thread))
+    asyncio.create_task(asyncio.to_thread(fastapi_start))
     logger.info("Si parte ciurma!")
     await asyncio.gather(add_aircrafts_to_db(), query_updater.update_query(), clients())
 

@@ -1,20 +1,19 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float, Table, PickleType, Uuid
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float, Table, PickleType, Uuid, create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship, backref
+from pydantic import BaseModel
 
-DATABASE_URL = "sqlite+aiosqlite:///instance/tempo_reale.sqlite"
+DATABASE_URL = "sqlite+aiosqlite:///tempo_reale3.sqlite"
 
 engine = create_async_engine(DATABASE_URL, echo=False, future=True)
 SessionLocal = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False, autoflush=False)
 Base = declarative_base()
-
-
 # isolation_level = "READ UNCOMMITTED"
 
 
 class Aereo(Base):
     __tablename__ = "aereo"
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     icao = Column(String(20), nullable=False)
     Registration = Column(String(100))
     ICAOTypeCode = Column(String(20))
@@ -51,7 +50,7 @@ ricevitore_peers_association = Table('ricevitore_peers', Base.metadata,
 
 class Ricevitore(Base):
     __tablename__ = "ricevitore"
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(40))
     uuid = Column(String(22), unique=True, nullable=True)
     position_counter = Column(Float)
@@ -77,7 +76,7 @@ class Ricevitore(Base):
 
 class Volo(Base):
     __tablename__ = "volo"
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     aereo_id = Column(Integer, ForeignKey('aereo.id'), nullable=False)
     aereo = relationship('Aereo', backref='voli')
     inizio = Column(String(40))
@@ -123,7 +122,7 @@ class Volo_rep():
 
 class SessionData(Base):
     __tablename__ = "session_data"
-    id = Column(String, primary_key=True)  # Usiamo l'ID della sessione come chiave primaria
+    id = Column(Integer, primary_key=True, autoincrement=True)  # Usiamo l'ID della sessione come chiave primaria
     session_uuid = Column(Uuid)
     data = Column(PickleType)  # Memorizziamo i dati della sessione serializzati
     ricevitore_uuid = Column(Integer, ForeignKey('ricevitore.uuid'))
@@ -135,3 +134,36 @@ class SessionData(Base):
     only_mine = Column(Boolean)
     modalita = Column(PickleType)
     ricevitore = relationship('Ricevitore', back_populates='session_data')
+
+
+class RicevitorePydantic(BaseModel):
+    id: int
+    name: str
+    uuid: str
+    position_counter: float
+    timed_out_counter: float
+    lat_min: float
+    lat_max: float
+    lon_min: float
+    lon_max: float
+    lat_avg: float
+    lon_avg: float
+    lat: float
+    lon: float
+    linked: bool
+    ip: str
+    messaggi_al_sec: int
+class SessionDataPydantic(BaseModel):
+    id: int
+    session_uuid: str
+    ricevitore_uuid: int
+    logged_in: bool
+    posizione: bool
+    selected_page: int
+    filter: str
+    sort: str
+    only_mine: bool
+    modalita: dict
+    ricevitore: RicevitorePydantic
+
+

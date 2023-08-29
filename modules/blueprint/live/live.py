@@ -7,15 +7,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import logging
 from common_py.commonLiveReport import pagination_func, query_updater
-from modules.blueprint.commonMy.commonMy import login_required
 import aiofiles
 from fastapi import APIRouter, Request, Form, Depends, Response
 from starlette.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from typing import Annotated
+from utility.model import SessionDataPydantic
+
 
 live_bp = APIRouter()
-templates = Jinja2Templates(directory="./templates")
+templates = Jinja2Templates(directory="C:\\Users\\Stage_ut\\Desktop\\stage-python\\myFlyitalyadsb\\modules\\blueprint\\live\\templates")
 
 live_bp.logger = logging.getLogger(__name__)
 
@@ -24,27 +25,27 @@ session_db: AsyncSession = SessionLocal()
 
 @live_bp.get("/", tags=["users"])
 @live_bp.post("/", tags=["users"])
-@login_required
-def index(request: Request):
-    request.session_data.selected_page = 1
-    request.session_data.filter = ""
-    request.session_data.sort = "hex"
-    form = MenuForm()
-    posizione = SliderForm()
-    mio = OnlyMine()
-    if form.validate_on_submit():
-        if form.Mappa_my.data:
+async def index(request: Request):
+    session: SessionDataPydantic = request.state.session
+    session.selected_page = 1
+    session.filter = ""
+    session.sort = "hex"
+    form = await MenuForm.from_formdata(request)
+    posizione = await SliderForm.from_formdata(request)
+    mio = await OnlyMine.from_formdata(request)
+    if await form.validate_on_submit():
+        if await form.Mappa_my.data:
             return RedirectResponse("/mappa")  # TODO riuscire a mettere url to funzione mappa
-        elif form.Mappa.data:
+        elif await form.Mappa.data:
             return RedirectResponse("https://mappa.flyitalyadsb.com")
-        elif form.Report.data:
+        elif await form.Report.data:
             return RedirectResponse("/report")  # TODO riuscire a mettere url to funzione report
-        elif form.Sito.data:
+        elif await form.Sito.data:
             return RedirectResponse("https://flyitalyadsb.com")
-        elif form.Grafici.data:
+        elif await form.Grafici.data:
             return RedirectResponse("https://statistiche.flyitalyadsb.com")
-    ricevitore: Ricevitore = request.session_data.ricevitore
-    if not ricevitore.lon:
+    ricevitore: Ricevitore = session.ricevitore
+    if ricevitore and not ricevitore.lon:
         flash("MLAT e FEED non sincronizzati, utilizzo la posizione media degli aerei ricevuti")
         # TODO handle this in the template
     return templates.TemplateResponse('index.html',
@@ -66,8 +67,8 @@ async def get_peer_info(uuid):
 
 
 @live_bp.get("/config.js")
-@login_required
-async def stazioni(request: Request, ricevitore: Ricevitore = Depends(get_session_data)):
+async def stazioni(request: Request):
+    ricevitore: Ricevitore = session.ricevitore
     async with aiofiles.open("path/config.js.jinja2", mode="r") as f:
         js_template = await f.read()
 
@@ -88,69 +89,64 @@ async def stazioni(request: Request, ricevitore: Ricevitore = Depends(get_sessio
     return Response(content=rendered_js, media_type="application/javascript")
 
 @live_bp.post("/session/posizione")
-@login_required
 def posizion(request: Request):
-    request.session_data.posizione = True
+    session.posizione = True
     raggio = Request.get("raggio")
-    request.session_data.raggio = raggio
+    session.raggio = raggio
     ok = {'data': "success"}
     return ok
 
 
 @live_bp.get("/session/only_mine")
 @live_bp.post("/session/only_mine")
-@login_required
 async def only_mine(request: Request, only_mine_data: Annotated[str, Form()]):
     live_bp.logger.debug(only_mine_data)
     if only_mine_data == "solo i miei dati":
-        request.session_data.only_mine = True
+        session.only_mine = True
     else:
-        request.session_data.only_mine = False
+        session.only_mine = False
     ok = {'data': "success"}
     return ok
 
 
 @live_bp.get('/selected_page')
-@login_required
 def session_data(request: Request):
-    selected_page = {'selected_page': request.session_data.selected_page, "filtered": request.session_data.filter,
-                     "sorted": request.session_data.sort}
+    selected_page = {'selected_page': session.selected_page, "filtered": session.filter,
+                     "sorted": session.sort}
     return selected_page
 
 
 @live_bp.post('/disattiva/<modalita>')
-@login_required
 def disattiva(request: Request,modalita):
-    request.session_data.modalita = False
+    session.modalita = False
     ok = {'data': "success"}
     return ok
 
 
 @live_bp.get("/table")
-@login_required
 async def table_pagination_func(request:Request, search: str = None, sort_by: str = "hex", new_page: str = None, page: int = 1):
     if search:
         search = search.upper()
     if sort_by != "hex":
-        request.session_data.sort = sort_by
+        session.sort = sort_by
 
     if new_page:
-        request.session_data.selected_page = page
+        session.selected_page = page
     else:
-        if page != request.session_data.selected_page:
-            page = request.session_data.selected_page
-    if search and not request.session_data.search:
+        if page != session.selected_page:
+            page = session.selected_page
+    if search and not session.search:
         page = 1
-        request.session_data.search = search
-    if search and request.session_data.search:
-        if request.session_data.search != search:
+        session.search = search
+    if search and session.search:
+        if session.search != search:
             page = 1
-            request.session_data.search = search
+            session.search = search
 
-    user: Ricevitore = request.session_data.ricevitore
+    user: Ricevitore = session.ricevitore
 
     process_default = True
-    if request.session_data.posizione:
+    if session.posizione:
         custom_readsb_url = f"http://readsb:30152/?circle={user.lat if user.lat else user.lat_avg},{user.lon if user.lon else user.lon_avg},{session['raggio']}"
         if platform.system() == "Windows":
             custom_readsb_url = f"https://mappa.flyitalyadsb.com/re-api/?circle={user.lat if user.lat else user.lat_avg},{user.lon if user.lon else user.lon_avg},{session['raggio']}"

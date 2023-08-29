@@ -6,7 +6,6 @@ import datetime
 from utility.model import Volo_rep, SessionData
 from common_py.commonLiveReport import pagination_func
 from common_py.common import query_updater, aircraft_cache
-from modules.blueprint.commonMy.commonMy import login_required
 from typing import List
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
@@ -20,7 +19,6 @@ report_bp.logger = logging.getLogger("REPORT")
 
 @report_bp.get("/report")
 @report_bp.post("/report")
-@login_required
 async def report(request: Request):
     request.session_data.selected_page = 1
     form = ReportForm()
@@ -70,7 +68,6 @@ async def report(request: Request):
 
 
 @report_bp.get("/report_table")
-@login_required
 async def report_table_pagination_func(request: Request, page: int):
     if request.session_data.report:
         voli = query_updater.reports[request.session_data.report]
@@ -83,7 +80,6 @@ async def report_table_pagination_func(request: Request, page: int):
 
 @report_bp.get("/editor")
 @report_bp.post("/editor")
-@login_required
 async def show_or_edit_aircraft(request: Request):
     form = EditForm()
     icao = request.args.get('icao')

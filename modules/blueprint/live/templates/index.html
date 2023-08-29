@@ -2,7 +2,6 @@
 <head>
     <meta charset="UTF-8">
     <title>My Fly Italy Adsb</title>
-    {% include "favicon.html" %}
 </head>
 
 <link rel="stylesheet" href="/style.css">
@@ -18,31 +17,26 @@
     <div class="row ">
         <div class="col-md-auto text-center">
             <form method="post">
-                {{ form.hidden_tag() }}
                 {{ form.Sito(class="btn btn-light btn-block") }}
             </form>
         </div>
         <div class="col-md-auto text-center">
             <form method="post">
-                {{ form.hidden_tag() }}
                 {{ form.Mappa_my(class="btn btn-light btn-block") }}
             </form>
         </div>
         <div class="col-md-auto text-center">
             <form method="post">
-                {{ form.hidden_tag() }}
                 {{ form.Report(class="btn btn-light btn-block") }}
             </form>
         </div>
         <div class="col-md-auto text-center">
             <form method="post">
-                {{ form.hidden_tag() }}
                 {{ form.Mappa(class="btn btn-light btn-block") }}
             </form>
         </div>
         <div class="col-md-auto text-center">
             <form method="post">
-                {{ form.hidden_tag() }}
                 {{ form.Grafici(class="btn btn-light btn-block") }}
             </form>
         </div>
@@ -55,25 +49,25 @@
         <form method="get" action="/table" id="searchForm" class="d-none form p-3">
             <div class="d-flex align-items-center">
                 <label class="form-label">
-                    <input type="text" class="form-control" name="search" value="{{ request.args.get('search', '') }}"
-                           placeholder="Cerca...">
+<input type="text" class="form-control" name="search" value="{{ request.query_params.get('search', '') }}" placeholder="Cerca...">
+
                 </label>
                 <label class="form-label">
                     <select name="sort_by" class="form-select">
-                        <option value="hex" {% if request.args.get('sort_by') == 'hex' %}selected{% endif %}>ICAO
+                        <option value="hex" {% if request.query_params.get('sort_by', '') == 'hex' %}selected{% endif %}>ICAO
                         </option>
                         <option value="Registrazione"
-                                {% if request.args.get('sort_by') == 'Registrazione' %}selected{% endif %}>
+                                {% if request.query_params.get('sort_by', '') == 'Registrazione' %}selected{% endif %}>
                             Registrazione
                         </option>
-                        <option value="flight" {% if request.args.get('sort_by') == 'flight' %}selected{% endif %}>
+                        <option value="flight" {% if request.query_params.get('sort_by', '') == 'flight' %}selected{% endif %}>
                             Callsign
                         </option>
-                        <option value="squawk" {% if request.args.get('sort_by') == 'squawk' %}selected{% endif %}>
+                        <option value="squawk" {% if request.query_params.get('sort_by', '') == 'squawk' %}selected{% endif %}>
                             Squawk
                         </option>
                         <option value="Operatore"
-                                {% if request.args.get('sort_by') == 'Operatore' %}selected{% endif %}>
+                                {% if request.query_params.get('sort_by', '') == 'Operatore' %}selected{% endif %}>
                             Operatore
                         </option>
                     </select>
@@ -88,24 +82,22 @@
     <div class="col-md-auto text-center">
 
         <form id="slider_form" method="post" class=" form p-3 d-none">
-            {{ posizione.hidden_tag() }}
             <label for="raggio">{{ posizione.raggio.label.text }}</label>
             <div class="d-flex align-items-center">
-                {{ posizione.raggio(class="form-range", id="raggio", type="range", min="0", max="500", oninput='outputUpdate(value)', value=session["raggio"]|default(250)) }}
+                {{ posizione.raggio(class="form-range", id="raggio", type="range", min="0", max="500", oninput='outputUpdate(value)', value= request.state.session.raggio |default(250)) }}
                 <button type="submit" class="paper-plane-button ms-2"><i class="fas fa-paper-plane"></i></button>
                 <button type="button" id="clear_posizione" class="x-button ms-2" style="display:none;"><i
                         class="fa-regular fa-circle-xmark"></i></button>
 
             </div>
             <output for="raggio" id="selected-raggio">
-                {% if session["raggio"] %}{{ session["raggio"] }} {% else %}250 {% endif %}</output>
+                {% if  request.state.session.raggio %}{{  request.state.session.raggio }} {% else %}250 {% endif %}</output>
         </form>
     </div>
 
     <div class="col-md-auto text-center">
 
         <form id="mio" method="post" class=" form p-3 d-none">
-            {{ mio.hidden_tag() }}
             <label for="raggio">{{ mio.only_mine.label.text }}</label>
             <div class="d-flex align-items-center">
                 {{ mio.only_mine(class="form-select") }}
@@ -119,13 +111,7 @@
 
 </div>
 <div class="row">
-    {% with message = get_flashed_messages() %}
-        {% if message %}
-            <div class="warning alert-warning alert-dismissible show" role="alert">
-                {{ message[0] }}
-            </div>
-        {% endif %}
-    {% endwith %}
+
 </div>
 
 <div id="mappa"></div>
