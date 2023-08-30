@@ -9,7 +9,7 @@ from starlette.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.datastructures import URL
 
-session_db = SessionLocal()
+
 commonMy_bp = APIRouter()
 templates = Jinja2Templates(directory=r"C:\Users\Stage_ut\Desktop\stage-python\myFlyitalyadsb\modules\blueprint\commonMy\templates")
 commonMy_bp.logger = logging.getLogger(__name__)
@@ -18,6 +18,7 @@ commonMy_bp.logger = logging.getLogger(__name__)
 @commonMy_bp.get('/login')
 @commonMy_bp.post('/login')
 async def dologin(request: Request, next_page: str = None, uuid: str = None):
+    session_db = request.state.session_db
     if next_page:
         request.state.session.next = next_page
     else:
@@ -31,6 +32,7 @@ async def dologin(request: Request, next_page: str = None, uuid: str = None):
         if check_exist:
             request.state.session.logged_in = True
             request.state.session.uuid = uuid
+            request.state.ricevitore = check_exist
         else:
             # flash('UUID errata', 'warning')
             return templates.TemplateResponse("login.html", {"request": request, "form": form})

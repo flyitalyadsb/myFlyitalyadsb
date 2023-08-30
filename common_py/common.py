@@ -74,9 +74,9 @@ class QueryUpdater:
 
             logger.info("used aircrafts.json")
 
-    async def aicrafts_filtered_by_my_receiver(self, my=False):
+    async def aicrafts_filtered_by_my_receiver(self,session, my=False):
         filtered_aircrafts = []
-        ricevitore: Ricevitore = session["ricevitore"]
+        ricevitore: Ricevitore = session.ricevitore
         if my:
             aircrafts = self.aircrafts_raw
         else:

@@ -125,7 +125,7 @@ class SessionData(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)  # Usiamo l'ID della sessione come chiave primaria
     session_uuid = Column(Uuid)
     data = Column(PickleType)  # Memorizziamo i dati della sessione serializzati
-    ricevitore_uuid = Column(Integer, ForeignKey('ricevitore.uuid'))
+    uuid = Column(Integer, ForeignKey('ricevitore.uuid'))
     logged_in = Column(Boolean)
     posizione = Column(Boolean)
     selected_page = Column(Integer)

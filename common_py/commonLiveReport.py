@@ -5,7 +5,7 @@ from utility.type_hint import DbDizionario
 from utility.config import PER_PAGE, UPDATE_TOTAL
 from common_py.common import query_updater, aircraft_cache
 from sqlalchemy import select
-
+from flask_paginate import Pagination
 session = SessionLocal()
 
 async def pagination_func(logger: logging.Logger, page: int, aircrafts: list = query_updater.aircrafts, live=True):

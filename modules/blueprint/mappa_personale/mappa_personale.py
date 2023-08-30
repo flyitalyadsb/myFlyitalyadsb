@@ -15,20 +15,22 @@ templates = Jinja2Templates(directory="templates")
 
 
 @mappa_bp.get('/')
-def mappa(request: Request):
+async def mappa(request: Request):
     return templates.TemplateResponse("index_mappa.html", {"request": request,})
 
 
 @mappa_bp.get("/data/aircraft.json")
-async def aircrafts():
-    aircrafts_json = await query_updater.aicrafts_filtered_by_my_receiver(my=True)
+async def aircrafts(request: Request):
+    session = request.state.session
+    aircrafts_json = await query_updater.aicrafts_filtered_by_my_receiver(session, my=True)
     ricevitore: Ricevitore = session["ricevitore"]
     json_aircraft = {"messages": ricevitore.messaggi_al_sec if ricevitore.messaggi_al_sec else 0, "now": time.time(), "aircraft": aircrafts_json}
     return json_aircraft
 
 
 @mappa_bp.get("/data/receiver.json")
-def receiver():
+async def receiver(request: Request):
+    session = request.state.session
     ricevitore: Ricevitore = session["ricevitore"]
     receiver = {
         "lat": ricevitore.lat,
@@ -42,7 +44,7 @@ def receiver():
 
 @mappa_bp.get("/aircraft_sil/<sil>")
 #@cache(max_age=1209600, public=True)
-def aircraft_sil(sil):
+async def aircraft_sil(sil):
     return send_file(path + "/aircraft_sil/" + sil)
 
 
@@ -54,7 +56,7 @@ def osm_tiles_offline(osm):
 @mappa_bp.get("/libs/<lib>")
 #@cache(max_age=7776000, public=True)
 #@inflate
-def libs(lib):
+async def libs(lib):
     try:
         return send_file(path + "/libs/" + lib)
     except:
@@ -63,7 +65,7 @@ def libs(lib):
 
 @mappa_bp.get("/style/<style>")
 #@cache(max_age=7776000, public=True)
-def style(style):
+async def style(style):
     return send_file(path + style)
 
 

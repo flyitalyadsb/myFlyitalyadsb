@@ -3,9 +3,8 @@ import logging
 import platform
 from fastapi import FastAPI, Request
 from werkzeug.middleware.proxy_fix import ProxyFix
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from starlette.responses import RedirectResponse
+from sqlalchemy.orm import joinedload
 
 from common_py.common import query_updater
 from modules.add_to_db.add_to_db import add_aircrafts_to_db
@@ -20,7 +19,6 @@ from utility.model import engine, Base, SessionLocal, SessionData, Ricevitore
 import uvicorn
 from uuid import uuid4, UUID
 
-session_db: AsyncSession = SessionLocal()
 
 
 def create_app():
@@ -51,41 +49,36 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 
 @app.middleware("http")
 async def my_middleware(request: Request, call_next):
-    print(request.url.path)
-    # request.url.path not in ["/login"] and (not hasattr(request.state, "session" or not hasattr(request.state.session, "logged_in")) or not request.state.session.logged_in):
-    if not hasattr(request.state, "session"):
-        session = SessionData()
-        session_db.add(session)
-        request.state.session = session
-        response = await dologin(request, next_page=str(request.url))
+    session_db = SessionLocal()
+    request.state.session_db = session_db
 
-    else:
-        # Questa parte viene eseguita prima della route
-        print("Middleware: prima della route")
-        session_uuid = request.cookies.get("session_uuid")
-        if session_uuid:
-            session_uuid = UUID(str(session_uuid))
-            result = await session_db.execute(select(SessionData).filter_by(session_uuid=session_uuid))
-            session = result.scalar_one_or_none()
-            request.state.session = session
-
-        else:
+    logger.debug("Middleware: prima della route")
+    session_uuid = request.cookies.get("session_uuid")
+    if not session_uuid:
+        if request.url.path not in ["/login"]:
             uuid = uuid4()
-            result = await session_db.execute(select(Ricevitore).filter_by(uuid=session_uuid))
-            ric = result.scalar_one_or_none()
             session = SessionData(session_uuid=uuid)
-            if ric:
-                session.ricevitore = ric
             request.state.session = session
-
-        response = await call_next(request)  # Questo passa il controllo alla route
-
-        if not session_uuid:
+            response = await dologin(request, next_page=str(request.url))
             response.set_cookie(key="session_uuid", value=uuid, httponly=True)
             session_db.add(session)
             await session_db.commit()
-    await session_db.commit()
-    return response
+            await session_db.close()
+            return response
+
+    else:
+        session_uuid = UUID(str(session_uuid))
+        print(f"Session id trovata! {session_uuid}")
+        result = await session_db.execute(select(SessionData).options(joinedload(SessionData.ricevitore)).filter_by(session_uuid=session_uuid))
+        session: SessionData = result.scalar_one_or_none()
+        request.state.session = session
+        if session.logged_in:
+            response = await call_next(request)  # Questo passa il controllo alla route
+        else:
+            response = await dologin(request, next_page=str(request.url))
+            await session_db.commit()
+        await session_db.close()
+        return response
 
 
 
