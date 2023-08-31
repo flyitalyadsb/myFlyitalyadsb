@@ -1,13 +1,10 @@
-import asyncio
 import logging
-from functools import wraps
 from fastapi import APIRouter, Request
 from utility.forms import LoginForm
-from utility.model import Ricevitore, SessionLocal
+from utility.model import Ricevitore
 from sqlalchemy import select
 from starlette.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from starlette.datastructures import URL
 
 
 commonMy_bp = APIRouter()

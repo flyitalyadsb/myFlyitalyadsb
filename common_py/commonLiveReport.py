@@ -5,11 +5,39 @@ from utility.type_hint import DbDizionario
 from utility.config import PER_PAGE, UPDATE_TOTAL
 from common_py.common import query_updater, aircraft_cache
 from sqlalchemy import select
-from flask_paginate import Pagination
+from sqlalchemy.engine import Result
+
 session = SessionLocal()
+
+
+def paginate(page, total, per_page):
+    total_pages = (total // per_page) + (1 if total % per_page > 0 else 0)
+
+    # Numero di bottoni da mostrare prima e dopo la pagina corrente
+    surrounding_buttons = 2
+    buttons = []
+
+    # Inizio e fine dei bottoni
+    start_page = max(1, page - surrounding_buttons)
+    end_page = min(total_pages, page + surrounding_buttons)
+
+    # Aggiungi il bottone "Precedente" se non siamo nella prima pagina
+    if page > 1:
+        buttons.append({"label": "Precedente", "page": page - 1})
+
+    for p in range(start_page, end_page + 1):
+        buttons.append({"label": str(p), "page": p, "active": p == page})
+
+    # Aggiungi il bottone "Successivo" se non siamo nell'ultima pagina
+    if page < total_pages:
+        buttons.append({"label": "Successivo", "page": page + 1})
+
+    return buttons
+
 
 async def pagination_func(logger: logging.Logger, page: int, aircrafts: list = query_updater.aircrafts, live=True):
     total = len(aircrafts)
+    logger.debug(f" len aircrafts passed to pagination_func: {len(aircrafts)} ")
     if page != 0:
         start = (page - 1) * PER_PAGE
     else:
@@ -18,8 +46,7 @@ async def pagination_func(logger: logging.Logger, page: int, aircrafts: list = q
     sliced_aircrafts = aircrafts[start:end]
     if live:
         sliced_aircrafts = await getINFO_or_add_aircraft_total(logger, sliced_aircrafts)
-
-    pagination = Pagination(page=page, total=total, per_page=PER_PAGE)
+    pagination = paginate(page=page, total=total, per_page=PER_PAGE)
     return sliced_aircrafts, pagination
 
 
@@ -42,23 +69,20 @@ async def add_aircraft_to_db(aircraft, logger):
 
 async def update_cache_for_added_aircrafts(aicraft_da_aggiungere):
     for icao in aicraft_da_aggiungere:
-        info = await session.execute(select(Aereo).filter_by(icao=icao.upper()).order_by(Aereo.id.desc()))
-        info: Aereo = info.scalar_one_or_none()
+        result: Result = await session.execute(select(Aereo).filter_by(icao=icao.upper()).order_by(Aereo.id.desc()))
+        info: Aereo = result.scalars().first()
         aircraft_cache[icao.lower()] = info.repr()
-
 
 async def getINFO_or_add_aircraft_total(logger: logging.Logger, sliced_aircrafts=None): # -> List[AircraftData]
     ac_presenti_nel_db = []
     aicraft_da_aggiungere = []
-    s = False
+    #print(f"len getINFO_or_add_aircraft_total sliced_aircrafts: {len(sliced_aircrafts)}")
     if sliced_aircrafts:
         aircrafts = sliced_aircrafts
-        if sliced_aircrafts in query_updater.aircrafts:
-            s = False
     else:
         aircrafts = query_updater.aircrafts
-
-    if not query_updater.aircrafts_da_servire[2] and time.time() - query_updater.aircrafts_da_servire[0] > UPDATE_TOTAL or s:
+    #print(f"len getINFO_or_add_aircraft_total aircrafts: {len(aircrafts)}")
+    if not query_updater.aircrafts_da_servire[2] and time.time() - query_updater.aircrafts_da_servire[0] > UPDATE_TOTAL:
         query_updater.aircrafts_da_servire[2] = True
 
         for aircraft in aircrafts:
@@ -83,7 +107,6 @@ async def getINFO_or_add_aircraft_total(logger: logging.Logger, sliced_aircrafts
 
         for ac in info_l:
             aircraft_cache[ac.icao.lower()] = ac.repr()
-
         for aircraft in aircrafts:
             aircraft["info"] = aircraft_cache[aircraft["hex"]]
 

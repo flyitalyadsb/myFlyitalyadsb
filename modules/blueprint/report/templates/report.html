@@ -1,8 +1,8 @@
-{% include "favicon.html" %}
+<html lang="it">
+
 <head>
-    <link rel="stylesheet" href="/style.css">
-
-
+    <link rel="stylesheet" href="/static/style.css">
+    <meta charset="UTF-8">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
@@ -35,7 +35,6 @@
 <div class="container mt-5">
     <p class="display-5">Filtra</p>
     <form method="post">
-        {{ form.hidden_tag() }}
         {{ form.BInizio }}
         <label for="inizio">Data Inizio:</label>
         {{ form.inizio }}
@@ -106,10 +105,16 @@
     <hr>
 
     {% if voli %}
+        <div class="pagination">
+            {% for button in buttons %}
+                {% if button.get('active') %}
+                    <span class="active">{{ button.label }}</span>
+                {% else %}
+                    <a class="pagination_link" href="?page={{ button.page }}">{{ button.label }}</a>
+                {% endif %}
+            {% endfor %}
+        </div>
         <div id="report_voli " class="table-responsive p-3">
-            {{ pagination.info }}
-            {{ pagination.links }}
-
             <table class="table-responsive">
                 <thead>
                 <tr>
@@ -151,9 +156,10 @@
                 {% endfor %}
                 </tbody>
             </table>
-            {{ pagination.links }}
         </div>
     {% endif %}
+
+    {#
     {% with message = get_flashed_messages() %}
         {% if message %}
             <div class="warning alert-warning alert-dismissible show" role="alert">
@@ -161,12 +167,14 @@
             </div>
         {% endif %}
     {% endwith %}
-</div>
+#}
 
+</div>
+</body>
 
 <script>
     $(function () {
-        $('body').on('click', '.pagination a', function (e) {
+        $('body').on('click', '.pagination_links', function (e) {
             e.preventDefault();
             var url = $(this).attr('href');
             const pageNumber = url.substring(url.indexOf('page=') + 5);

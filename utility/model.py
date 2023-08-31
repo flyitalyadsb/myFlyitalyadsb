@@ -1,4 +1,6 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float, Table, PickleType, Uuid, create_engine
+import datetime
+
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float, Table, PickleType, Uuid, DateTime
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship, backref
 from pydantic import BaseModel
@@ -79,8 +81,8 @@ class Volo(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     aereo_id = Column(Integer, ForeignKey('aereo.id'), nullable=False)
     aereo = relationship('Aereo', backref='voli')
-    inizio = Column(String(40))
-    fine = Column(String(40))
+    inizio = Column(DateTime)
+    fine = Column(DateTime)
     squawk = Column(String(40))
     traccia_conclusa = Column(Boolean())
 
@@ -100,8 +102,8 @@ class Volo_rep():
         self.operator: str = volo.aereo.Operator
         self.ICAOTypeCode = volo.aereo.ICAOTypeCode
         self.CivMil = volo.aereo.CivMil
-        self.inizio: int = volo.inizio
-        self.fine: int = volo.fine
+        self.inizio: datetime.datetime = volo.inizio
+        self.fine: datetime.datetime = volo.fine
         self.squawk: str = volo.squawk
         self.traccia_conclusa: bool = volo.traccia_conclusa
 

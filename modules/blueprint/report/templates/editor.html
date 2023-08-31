@@ -1,5 +1,10 @@
-{% extends "bootstrap/base.html" %}
-{% include "favicon.html" %}
+<head>
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+
+<!-- Optional: Bootstrap JS (if you need JS components) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+</head>
 {% block content %}
     <div class="container mt-5">
         <div class="row justify-content-center">
@@ -14,7 +19,6 @@
             </div>
             <div class="col-md-6">
                 <form method="POST" id="edit">
-                    {{ form.hidden_tag() }}
                     <h2 class="text-center mb-4" id="icao">
                         {{ (icao if icao else '').upper() | default('UNKNOWN') }}
                     </h2>
@@ -38,13 +42,7 @@
                         {{ form.submit(class="btn btn-primary", value="Invia") }}
                     </div>
                 </form>
-                {% with message = get_flashed_messages() %}
-                    {% if message %}
-                        <div class="success alert-success alert-dismissible show" role="alert">
-                            {{ message[0] }}
-                        </div>
-                    {% endif %}
-                {% endwith %}
+
             </div>
         </div>
     </div>

@@ -1,4 +1,6 @@
 from typing import Union, List, Optional, Any
+from pydantic import BaseModel
+from utility.model import Aereo_rep
 
 
 class DbDizionario:  # database opensky
@@ -84,6 +86,7 @@ class AircraftDataRaw(dict):  # aircraft di aircrafts.json
         acas_ra: Experimental attribute for ACAS.
         gpsOkBefore: Experimental attribute indicating past GPS status.
     """
+
     def __init__(self,
                  hex: str,
                  type: str,
@@ -202,6 +205,71 @@ class AircraftsJson:
     now: int
     messages: int
     aircraft: List[AircraftDataRaw]
+
+class info(BaseModel):
+    id: int
+    icao: str
+    Registration: str
+    ICAOTypeCode: str
+    Type: str
+    CivMil: bool
+    Operator: str
+
+
+class Aircraft_da_servire(BaseModel):
+    hex: str
+    type: str = None
+    flight: str = None
+    alt_baro: Union[int, str] = None
+    alt_geom: int = None
+    gs: float = None
+    ias: int = None
+    tas: int = None
+    mach: float = None
+    track: float = None
+    track_rate: float = None
+    roll: float = None
+    mag_heading: float = None
+    true_heading: float = None
+    baro_rate: int = None
+    geom_rate: int = None
+    squawk: str = None
+    emergency: str = None
+    category: str = None
+    nav_qnh: float = None
+    nav_altitude_mcp: int = None
+    nav_altitude_fms: int = None
+    nav_heading: float = None
+    nav_modes: List[str] = None
+    lat: float = None
+    lon: float = None
+    nic: int = None
+    rc: int = None
+    seen_pos: float = None
+    version: int = None
+    nic_baro: int = None
+    nac_p: int = None
+    nac_v: int = None
+    sil: int = None
+    sil_type: str = None
+    gva: int = None
+    sda: int = None
+    mlat: List[str] = None
+    tisb: List[str] = None
+    messages: int = None
+    seen: float = None
+    rssi: float = None
+    alert: int = None
+    spi: int = None
+    wd: Optional[int] = None
+    ws: Optional[int] = None
+    oat: Optional[float] = None
+    tat: Optional[float] = None
+    acas_ra: Any = None
+    gpsOkBefore: Any = None
+    ReceiversUuids: str = None
+    info: info = None
+
 
 
 class Receiver:

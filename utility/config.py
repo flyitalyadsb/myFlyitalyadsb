@@ -27,7 +27,7 @@ if platform.system() == "Windows":
     CLIENTS_MLAT_JSON = "./windows/mlat/clients.json"
     DB_OPEN_ZIP = "./windows/dati/open.zip"
     DB_OPEN_DIR = "../windows/dati/"
-    TIMEOUT = 5
+    TIMEOUT = 10
 
 URL_OPEN = "https://opensky-network.org/datasets/metadata/aircraftDatabase.zip"
 DB_OPEN = DB_OPEN_DIR + "media/data/samples/metadata/aircraftDatabase.csv"
