@@ -27,7 +27,7 @@ from fastapi.staticfiles import StaticFiles
 def create_app():
     app = FastAPI(title=__name__)
     templates = Jinja2Templates(
-        directory="C:\\Users\\Stage_ut\\Desktop\\stage-python\\myFlyitalyadsb\\modules\\blueprint\\utility\\templates")
+        directory="modules/blueprint/utility/templates")
 
     @app.exception_handler(HTTPException)
     async def custom_http_exception_handler(request: Request, exc: HTTPException):
@@ -123,23 +123,26 @@ def fastapi_start():
 
 
 async def run():
+    asyncio.get_event_loop().set_debug(False)
+
     await setup_database()
+    await clients()
     if debug:
         await clients()
         return
 
     if platform.system() == "Windows":
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    logger.warning("Dipendenze in partenza...")
-    asyncio.get_event_loop().set_debug(False)
 
+    logger.warning("Dipendenze in partenza...")
     await asyncio.gather(query_updater.update_db(), query_updater.update_query(True))
-    logger.info("Primi await completati, ora partono gli h24")
-    logger.info("Facciamo partire Flask")
+
+    logger.info("Facciamo partire Fastapi")
     asyncio.create_task(asyncio.to_thread(fastapi_start))
+
     logger.info("Si parte ciurma!")
-    await query_updater.update_query()
-    await asyncio.gather(clients())
+
+    await asyncio.gather(add_aircrafts_to_db(), clients(), query_updater.update_query())
 
 
 asyncio.run(run())

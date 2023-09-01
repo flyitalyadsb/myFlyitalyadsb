@@ -1,10 +1,10 @@
 import logging
 import aiohttp
 from utility.config import TIMEOUT, AIRCRAFT_JSON, URL_OPEN, DB_OPEN_DIR, DB_OPEN_ZIP, DB_OPEN, URL_READSB, UNIX_SOCKET, UNIX, FREQUENZA_AGGIORNAMENTO_AEREI
-import json
 from utility.model import Aereo, Ricevitore, SessionLocal
 from utility.type_hint import AircraftDataRaw, DbDizionario, AircraftsJson
 import csv
+import ujson
 from cachetools import LRUCache
 import asyncio
 import aiofiles
@@ -30,7 +30,7 @@ class QueryUpdater:
         self.reader: asyncio.StreamReader
         self.writer: asyncio.StreamWriter
         self.icao_presenti_nel_db: List = []  # elenco icao di cui abbiamo salvato informazioni nel nostro db
-        self.data: AircraftsJson | {} = {}  # aircrafts.jsonngb
+        self.data: AircraftsJson | {} = {}  # aircrafts.json
         self.aircrafts: List[AircraftDataRaw] = []  # aircrafts di aircrafts.json
         self.aircrafts_raw: List[AircraftDataRaw] = []  # aircrafts di aircrafts.json
         self.database_open: dict[str:DbDizionario] = {}  # database opensky
@@ -52,7 +52,7 @@ class QueryUpdater:
                 return {}
     async def real_update_query(self):
         if UNIX:
-            data = json.loads(await self.fetch_data_from_unix())
+            data = ujson.loads(await self.fetch_data_from_unix())
         else:
             async with aiohttp.ClientSession() as session:
                 data = await self.fetch_data_from_url(logger, URL_READSB, session)
@@ -68,7 +68,7 @@ class QueryUpdater:
             logger.debug("using aircrafts.json")
             async with aiofiles.open(AIRCRAFT_JSON, 'r') as file:
                 content = await file.read()
-                self.data = json.loads(content)
+                self.data = ujson.loads(content)
                 self.aircrafts = deepcopy(self.data["aircraft"])
                 self.aircrafts_raw = self.data["aircraft"]
 

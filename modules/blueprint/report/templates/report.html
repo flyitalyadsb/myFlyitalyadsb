@@ -34,7 +34,7 @@
 <p class="centrale display-1">Report voli</p>
 <div class="container mt-5">
     <p class="display-5">Filtra</p>
-    <form method="post">
+    <form method="post" action="/report" method="POST">
         {{ form.BInizio }}
         <label for="inizio">Data Inizio:</label>
         {{ form.inizio }}
@@ -128,6 +128,8 @@
                     <th>Fine</th>
                     <th>Traccia</th>
                     <th>Squawk</th>
+                    <th>Editor</th>
+
                 </tr>
                 </thead>
                 <tbody>
@@ -148,9 +150,12 @@
                         <td>{{ volo["inizio"].strftime('%Y-%m-%d %H:%M:%S') if volo["inizio"] is defined else '' }}</td>
                         <td>{{ volo["fine"].strftime('%Y-%m-%d %H:%M:%S') if volo["fine"] is defined else '' }}</td>
                         <td>
-                            <a href="https://mappa.flyitalyadsb.com?icao={{ volo['icao'] }}?showTrace={{ volo.inizio.strftime('%Y-%m-%d') }}"
+                            <a href="https://mappa.flyitalyadsb.com?icao={{ volo['icao'].lower() }}&showTrace={{ volo.inizio.strftime('%Y-%m-%d') }}"
                                class="btn btn-sm btn-outline-secondary">Report</a></td>
                         <td>{{ volo["squawk"] if volo["squawk"] is defined else '' }}</td>
+                        <td><a href={{ "https://listavoli.flyitalyadsb.com/editor?icao=" + volo['icao'] }}>Modifica
+                            Informazioni</a></td>
+
                     </tr>
 
                 {% endfor %}

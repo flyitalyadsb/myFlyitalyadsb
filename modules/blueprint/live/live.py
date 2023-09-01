@@ -8,15 +8,14 @@ from sqlalchemy import select
 import logging
 from common_py.commonLiveReport import pagination_func, query_updater
 import aiofiles
-from fastapi import APIRouter, Request, Form, Response
+from fastapi import APIRouter, Request, Response, status
 from starlette.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from typing import Annotated
 from utility.model import SessionData
 
 live_bp = APIRouter()
 templates = Jinja2Templates(
-    directory="C:\\Users\\Stage_ut\\Desktop\\stage-python\\myFlyitalyadsb\\modules\\blueprint\\live\\templates")
+    directory="modules/blueprint/live/templates")
 
 live_bp.logger = logging.getLogger(__name__)
 
@@ -26,22 +25,21 @@ live_bp.logger = logging.getLogger(__name__)
 async def index(request: Request):
     session: SessionData = request.state.session
     session.selected_page = 1
-    session.filter = ""
     session.sort = "hex"
     form = await MenuForm.from_formdata(request)
     posizione = await SliderForm.from_formdata(request)
     mio = await OnlyMine.from_formdata(request)
     if await form.validate_on_submit():
         if form.Mappa_my.data:
-            return RedirectResponse("/mappa")  # TODO riuscire a mettere url to funzione mappa
+            return RedirectResponse("/mappa", status_code=status.HTTP_303_SEE_OTHER)
         elif form.Mappa.data:
-            RedirectResponse("https://mappa.flyitalyadsb.com")
+            RedirectResponse("https://mappa.flyitalyadsb.com", status_code=status.HTTP_303_SEE_OTHER)
         elif form.Report.data:
-            return RedirectResponse("/report")  # TODO riuscire a mettere url to funzione report
+            return RedirectResponse("/report", status_code=status.HTTP_303_SEE_OTHER)
         elif form.Sito.data:
-            return RedirectResponse("https://flyitalyadsb.com")
+            return RedirectResponse("https://flyitalyadsb.com", status_code=status.HTTP_303_SEE_OTHER)
         elif form.Grafici.data:
-            return RedirectResponse("https://statistiche.flyitalyadsb.com")
+            return RedirectResponse("https://statistiche.flyitalyadsb.com", status_code=status.HTTP_303_SEE_OTHER)
     ricevitore = session.ricevitore
     if ricevitore and not ricevitore.lon:
         flash("MLAT e FEED non sincronizzati, utilizzo la posizione media degli aerei ricevuti")
@@ -64,10 +62,13 @@ async def get_peer_info(session_db, uuid):
             'nome': ric.name if ric.name else ric.uuid
         }
 
+
 async def get_peers_of_ricevitore(session_db, ricevitore_id):
-    result = await session_db.execute(select(Ricevitore).filter_by(id=ricevitore_id).options(selectinload(Ricevitore.peers)))
+    result = await session_db.execute(
+        select(Ricevitore).filter_by(id=ricevitore_id).options(selectinload(Ricevitore.peers)))
     ricevitore = result.scalar_one_or_none()
     return ricevitore.peers
+
 
 @live_bp.get("/config.js")
 async def stazioni(request: Request):
@@ -78,9 +79,9 @@ async def stazioni(request: Request):
         js_template = await f.read()
 
     stazione_centrale_data = await get_peer_info(session_db, ricevitore.uuid)
-    peers =  await get_peers_of_ricevitore(session_db, ricevitore.id)
+    peers = await get_peers_of_ricevitore(session_db, ricevitore.id)
     stazioni_collegate_data = await asyncio.gather(
-        *(get_peer_info(session_db,ricevitore.uuid) for ricevitore in peers)
+        *(get_peer_info(session_db, ricevitore.uuid) for ricevitore in peers)
     )
 
     rendered_js = templates.TemplateResponse(
@@ -96,49 +97,56 @@ async def stazioni(request: Request):
 
 
 @live_bp.post("/session/posizione")
-def posizion(request: Request):
+async def posizion(request: Request):
     session = request.state.session
-    session.posizione = True
-    raggio = Request.get("raggio")
-    session.raggio = raggio
-    ok = {'data': "success"}
-    return ok
-
-
-@live_bp.get("/session/only_mine")
-@live_bp.post("/session/only_mine")
-async def only_mine(request: Request, only_mine_data: Annotated[str, Form()]):
-    session = request.state.session
-    live_bp.logger.debug(only_mine_data)
-    if only_mine_data == "solo i miei dati":
-        session.only_mine = True
+    form = await SliderForm.from_formdata(request)
+    if await form.validate_on_submit():
+        session.posizione = True
+        session.raggio = form.raggio.data
+        ok = {'data': "success"}
+        return ok
     else:
-        session.only_mine = False
-    ok = {'data': "success"}
-    return ok
+        return Response(status_code=403)
+
+
+@live_bp.api_route("/session/only_mine", methods=["POST", "GET"])
+async def only_mine(request: Request, only_mine_data: str | bool = None):
+    session = request.state.session
+    form = await OnlyMine.from_formdata(request)
+    if await form.validate_on_submit():
+        only_mine_data = form.only_mine.data
+    if only_mine_data is not None:
+        live_bp.logger.debug(only_mine_data)
+        if only_mine_data == "solo i miei dati":
+            session.only_mine = True
+        else:
+            session.only_mine = False
+        ok = {'data': "success"}
+        return ok
+    else:
+        print("err")
 
 
 @live_bp.get('/selected_page')
-def session_data(request: Request):
+async def session_data(request: Request):
     session = request.state.session
-    selected_page = {'selected_page': session.selected_page, "filtered": session.filter,
+    selected_page = {'selected_page': session.selected_page, "filtered": session.search,
                      "sorted": session.sort}
     return selected_page
 
 
-@live_bp.post('/disattiva/<modalita>')   ##fdoefpioewpjoewpjoejpowfjpoewpjoefw
-def disattiva(request: Request, modalita):
+@live_bp.post('/disattiva/{modalita}')
+async def disattiva(request: Request, modalita: str):
     session = request.state.session
-    session.modalita = False
+    setattr(session, modalita, False)
     ok = {'data': "success"}
     return ok
 
 
 @live_bp.get("/table")
-async def table_pagination_func(request: Request, search: str = None, sort_by: str = "hex", new_page: bool = None, page:int = 1):
+async def table_pagination_func(request: Request, search: str = None, sort_by: str = "hex", new_page: bool = None,
+                                page: int = 1):
     session = request.state.session
-    #if not session.selected_page:
-    #    session.selected_page = 1
     if search:
         search = search.upper()
     if sort_by != "hex":
@@ -150,37 +158,40 @@ async def table_pagination_func(request: Request, search: str = None, sort_by: s
         if session.selected_page:
             if page != session.selected_page:
                 page = session.selected_page
-    if search and not session.search:
-        page = 1
-        session.search = search
-    if search and session.search:
-        if session.search != search:
-            page = 1
-            session.search = search
-    user: Ricevitore = session.ricevitore
 
+    #if search and not session.search:
+    #    page = 1
+    #    session.search = search
+
+    #if search and session.search:
+    #    if session.search != search:
+    #        page = 1
+    #        session.search = search
+    user: Ricevitore = session.ricevitore
+    print(session.search)
     process_default = True
     if session.posizione:
-        custom_readsb_url = f"http://readsb:30152/?circle={user.lat if user.lat else user.lat_avg},{user.lon if user.lon else user.lon_avg},{session['raggio']}"
+        custom_readsb_url = f"http://readsb:30152/?circle={user.lat if user.lat else user.lat_avg},{user.lon if user.lon else user.lon_avg},{session.raggio}"
         if platform.system() == "Windows":
-            custom_readsb_url = f"https://mappa.flyitalyadsb.com/re-api/?circle={user.lat if user.lat else user.lat_avg},{user.lon if user.lon else user.lon_avg},{session['raggio']}"
+            custom_readsb_url = f"https://mappa.flyitalyadsb.com/re-api/?circle={user.lat if user.lat else user.lat_avg},{user.lon if user.lon else user.lon_avg},{session.raggio}"
         async with aiohttp.ClientSession() as session_http:
             data = await query_updater.fetch_data_from_url(live_bp.logger, custom_readsb_url, session_http)
         custom_aircrafts = data["aircraft"]
-        sliced_aircrafts, pagination = await pagination_func(logger=live_bp.logger, page=page, aircrafts=custom_aircrafts)
+        sliced_aircrafts, pagination = await pagination_func(logger=live_bp.logger, page=page,
+                                                             aircrafts=custom_aircrafts)
 
         process_default = False
 
     elif session.only_mine:
         custom_aircrafts = await query_updater.aicrafts_filtered_by_my_receiver(session)
-        sliced_aircrafts, pagination = await pagination_func(logger=live_bp.logger, page=page, aircrafts=custom_aircrafts)
+        sliced_aircrafts, pagination = await pagination_func(logger=live_bp.logger, page=page,
+                                                             aircrafts=custom_aircrafts)
         process_default = False
 
     if process_default:
-        #print(f"len query_updater.aircrafts {len(query_updater.aircrafts)}")
-        sliced_aircrafts, pagination = await pagination_func(logger=live_bp.logger, page=page, aircrafts=query_updater.aircrafts)
+        sliced_aircrafts, pagination = await pagination_func(logger=live_bp.logger, page=page,
+                                                             aircrafts=query_updater.aircrafts)
     if search and session.search:
-        session["filter"] = search
         data_filtered = [row for row in sliced_aircrafts if
                          search in row['hex'] or
                          (row["info"] is not None and row["info"].Registration is not None and search in row[
@@ -199,8 +210,6 @@ async def table_pagination_func(request: Request, search: str = None, sort_by: s
     elif sort_by == "Operator":
         sliced_aircrafts.sort(
             key=lambda x: x["info"].Operator if x["info"] is not None and x["info"].Operator is not None else "")
-
-    #print(len(sliced_aircrafts))
     return templates.TemplateResponse("table.html",
                                       {"request": request, "aircrafts": sliced_aircrafts, "buttons": pagination})
 

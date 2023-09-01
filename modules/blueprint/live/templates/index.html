@@ -213,6 +213,7 @@ function update() {
             }
             xhttp.open("GET", url + "&new_page=True", true);
             xhttp.send();
+            update()
 
         });
     });

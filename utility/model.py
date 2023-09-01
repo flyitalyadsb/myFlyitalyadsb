@@ -95,7 +95,7 @@ Volo.ricevitore = relationship('Ricevitore', secondary=ricevitori_voli, backref=
 
 
 class Volo_rep():
-    def __init__(self, volo: "Volo"):
+    def __init__(self, volo: Volo):
         self.id: int = volo.id
         self.icao: str = volo.aereo.icao
         self.registrazione: str = volo.aereo.Registration
@@ -130,6 +130,8 @@ class SessionData(Base):
     uuid = Column(Integer, ForeignKey('ricevitore.uuid'))
     logged_in = Column(Boolean)
     posizione = Column(Boolean)
+    raggio = Column(Integer)
+    search = Column(String)
     selected_page = Column(Integer)
     filter = Column(String)
     sort = Column(String)
@@ -164,6 +166,8 @@ class SessionDataPydantic(BaseModel):
     selected_page: int
     filter: str
     sort: str
+    search: str
+    raggio: int
     only_mine: bool
     modalita: dict
     ricevitore: RicevitorePydantic

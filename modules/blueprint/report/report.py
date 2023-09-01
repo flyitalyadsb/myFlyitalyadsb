@@ -1,3 +1,5 @@
+from sqlalchemy.orm import selectinload, joinedload
+
 from utility.model import Volo, Aereo
 from utility.forms import ReportForm, EditForm
 import time
@@ -23,10 +25,8 @@ async def report(request: Request):
     session = request.state.session
     session.selected_page = 1
     form = await ReportForm.from_formdata(request)
-
     if form.is_submitted():
-        query = select(Volo, Aereo).join(Aereo, Aereo.id == Volo.aereo_id)
-
+        query = select(Volo).options(joinedload(Volo.aereo))
         if form.BInizio.data:
             query = query.filter(Volo.inizio >= int(time.mktime(form.inizio.data.timetuple())))
         if form.BFine.data:
