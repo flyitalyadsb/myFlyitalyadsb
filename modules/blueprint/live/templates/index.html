@@ -49,21 +49,25 @@
         <form method="get" action="/table" id="searchForm" class="d-none form p-3">
             <div class="d-flex align-items-center">
                 <label class="form-label">
-<input type="text" class="form-control" name="search" value="{{ request.query_params.get('search', '') }}" placeholder="Cerca...">
+                    <input type="text" class="form-control" name="search"
+                           value="{{ request.query_params.get('search', '') }}" placeholder="Cerca...">
 
                 </label>
                 <label class="form-label">
                     <select name="sort_by" class="form-select">
-                        <option value="hex" {% if request.query_params.get('sort_by', '') == 'hex' %}selected{% endif %}>ICAO
+                        <option value="hex"
+                                {% if request.query_params.get('sort_by', '') == 'hex' %}selected{% endif %}>ICAO
                         </option>
                         <option value="Registrazione"
                                 {% if request.query_params.get('sort_by', '') == 'Registrazione' %}selected{% endif %}>
                             Registrazione
                         </option>
-                        <option value="flight" {% if request.query_params.get('sort_by', '') == 'flight' %}selected{% endif %}>
+                        <option value="flight"
+                                {% if request.query_params.get('sort_by', '') == 'flight' %}selected{% endif %}>
                             Callsign
                         </option>
-                        <option value="squawk" {% if request.query_params.get('sort_by', '') == 'squawk' %}selected{% endif %}>
+                        <option value="squawk"
+                                {% if request.query_params.get('sort_by', '') == 'squawk' %}selected{% endif %}>
                             Squawk
                         </option>
                         <option value="Operatore"
@@ -91,7 +95,8 @@
 
             </div>
             <output for="raggio" id="selected-raggio">
-                {% if  request.state.session.raggio %}{{  request.state.session.raggio }} {% else %}250 {% endif %}</output>
+                {% if  request.state.session.raggio %}{{ request.state.session.raggio }} {% else %}
+                    250 {% endif %}</output>
         </form>
     </div>
 
@@ -123,7 +128,6 @@
 <script>
 
 
-
     let mappa = L.map('mappa').setView([stazioneCentrale.lat, stazioneCentrale.lon], 14);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -147,49 +151,49 @@
     });
 
 
-function update() {
-    $.ajax({
-        type: 'GET',
-        url: '/selected_page',
-        success: function (data) {
-            let currentPage = data.selected_page;
-            let filter = data.filtered;
-            let sort = data.sorted;
+    function update() {
+        $.ajax({
+            type: 'GET',
+            url: '/selected_page',
+            success: function (data) {
+                let currentPage = data.selected_page;
+                let filter = data.filtered;
+                let sort = data.sorted;
 
-            let params = [];
+                let params = [];
 
-            if (currentPage !== null) {
-                params.push("page=" + currentPage);
-            }
-
-            if (filter !== null) {
-                params.push("search=" + filter);
-            }
-
-            if (sort !== null) {
-                params.push("sort_by=" + sort);
-            }
-
-            let queryString = params.join('&');
-            var xhttp = new XMLHttpRequest();
-            xhttp.onreadystatechange = function () {
-                if (this.readyState === 4 && this.status === 200) {
-                    document.getElementById("benvenuto").innerHTML = "My Fly Italy Adsb - passirano";
-                    document.getElementById("benvenuto").classList.add("centrale");
-                    var elements = document.querySelectorAll('.d-none');
-                    elements.forEach(function (element) {
-                        element.classList.remove('d-none');
-                    });
-                    document.getElementById("menu").classList.add("d-flex");
-                    document.getElementById("report_voli").innerHTML = this.responseText;
+                if (currentPage !== null) {
+                    params.push("page=" + currentPage);
                 }
-            };
 
-            xhttp.open("GET", "/table?" + queryString, true);
-            xhttp.send();
-        }
-    });
-}
+                if (filter !== null) {
+                    params.push("search=" + filter);
+                }
+
+                if (sort !== null) {
+                    params.push("sort_by=" + sort);
+                }
+
+                let queryString = params.join('&');
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState === 4 && this.status === 200) {
+                        document.getElementById("benvenuto").innerHTML = "My Fly Italy Adsb - passirano";
+                        document.getElementById("benvenuto").classList.add("centrale");
+                        var elements = document.querySelectorAll('.d-none');
+                        elements.forEach(function (element) {
+                            element.classList.remove('d-none');
+                        });
+                        document.getElementById("menu").classList.add("d-flex");
+                        document.getElementById("report_voli").innerHTML = this.responseText;
+                    }
+                };
+
+                xhttp.open("GET", "/table?" + queryString, true);
+                xhttp.send();
+            }
+        });
+    }
 
 
     $(function () {
@@ -338,6 +342,7 @@ function update() {
     function outputUpdate(value) {
         document.getElementById('selected-raggio').textContent = value;
     }
+
     setInterval(update, 5000)
     update()
 

@@ -1,9 +1,10 @@
-import os
 import datetime
 import gzip
 import json
+import os
 
 dir = 'F:/globe_history_prova/'
+
 
 @app_context
 def getINFO_or_add_aircraft(database_open, icao: str, icao_presenti_nel_db):
@@ -31,6 +32,7 @@ def getINFO_or_add_aircraft(database_open, icao: str, icao_presenti_nel_db):
         info = Aerei.query.filter_by(icao=icao.upper()).first()
         aircraft_cache[icao] = info
     return info
+
 
 @app_context
 def convert_globe_to_db():
@@ -80,12 +82,6 @@ def convert_globe_to_db():
                             Voli(aereo_id=info.id, squawk=squawk, inizio=ftime.timestamp(), fine=ltime.timestamp(),
                                  link_report=link_report, traccia_conclusa=True))
                         db.session.commit()
-
-
-
-
-
-
 
 
 def app_context(f):

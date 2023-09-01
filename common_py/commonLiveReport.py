@@ -1,11 +1,13 @@
 import logging
 import time
-from utility.model import Aereo, SessionLocal
-from utility.type_hint import DbDizionario
-from utility.config import PER_PAGE, UPDATE_TOTAL
-from common_py.common import query_updater, aircraft_cache
+
 from sqlalchemy import select
 from sqlalchemy.engine import Result
+
+from common_py.common import query_updater, aircraft_cache
+from utility.config import PER_PAGE, UPDATE_TOTAL
+from utility.model import Aereo, SessionLocal
+from utility.type_hint import DbDizionario
 
 session = SessionLocal()
 
@@ -61,7 +63,8 @@ async def add_aircraft_to_db(aircraft, logger):
         operator = db_data.operator
         serial_number = db_data.serialnumber
         operator_icao = db_data.operatoricao
-        session.add(Aereo(icao=icao.upper(), Registration=reg, ICAOTypeCode=type, Type=model, Operator=operator, SerialNumber=serial_number, OperatorIcao=operator_icao))
+        session.add(Aereo(icao=icao.upper(), Registration=reg, ICAOTypeCode=type, Type=model, Operator=operator,
+                          SerialNumber=serial_number, OperatorIcao=operator_icao))
     else:
         session.add(Aereo(icao=icao.upper()))
     return icao
@@ -73,15 +76,16 @@ async def update_cache_for_added_aircrafts(aicraft_da_aggiungere):
         info: Aereo = result.scalars().first()
         aircraft_cache[icao.lower()] = info.repr()
 
-async def getINFO_or_add_aircraft_total(logger: logging.Logger, sliced_aircrafts=None): # -> List[AircraftData]
+
+async def getINFO_or_add_aircraft_total(logger: logging.Logger, sliced_aircrafts=None):  # -> List[AircraftData]
     ac_presenti_nel_db = []
     aicraft_da_aggiungere = []
-    #print(f"len getINFO_or_add_aircraft_total sliced_aircrafts: {len(sliced_aircrafts)}")
+    # print(f"len getINFO_or_add_aircraft_total sliced_aircrafts: {len(sliced_aircrafts)}")
     if sliced_aircrafts:
         aircrafts = sliced_aircrafts
     else:
         aircrafts = query_updater.aircrafts
-    #print(f"len getINFO_or_add_aircraft_total aircrafts: {len(aircrafts)}")
+    # print(f"len getINFO_or_add_aircraft_total aircrafts: {len(aircrafts)}")
     if not query_updater.aircrafts_da_servire[2] and time.time() - query_updater.aircrafts_da_servire[0] > UPDATE_TOTAL:
         query_updater.aircrafts_da_servire[2] = True
 
@@ -117,4 +121,3 @@ async def getINFO_or_add_aircraft_total(logger: logging.Logger, sliced_aircrafts
         return aircrafts
     else:
         return query_updater.aircrafts_da_servire[1]
-

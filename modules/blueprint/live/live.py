@@ -1,16 +1,18 @@
+import asyncio
+import logging
+import platform
+
+import aiofiles
 import aiohttp
+from fastapi import APIRouter, Request, Response, status
+from fastapi.templating import Jinja2Templates
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+from starlette.responses import RedirectResponse
+
+from common_py.commonLiveReport import pagination_func, query_updater
 from utility.forms import MenuForm, SliderForm, OnlyMine
 from utility.model import Ricevitore
-import platform
-import asyncio
-from sqlalchemy.orm import selectinload
-from sqlalchemy import select
-import logging
-from common_py.commonLiveReport import pagination_func, query_updater
-import aiofiles
-from fastapi import APIRouter, Request, Response, status
-from starlette.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
 from utility.model import SessionData
 
 live_bp = APIRouter()
@@ -159,11 +161,11 @@ async def table_pagination_func(request: Request, search: str = None, sort_by: s
             if page != session.selected_page:
                 page = session.selected_page
 
-    #if search and not session.search:
+    # if search and not session.search:
     #    page = 1
     #    session.search = search
 
-    #if search and session.search:
+    # if search and session.search:
     #    if session.search != search:
     #        page = 1
     #        session.search = search

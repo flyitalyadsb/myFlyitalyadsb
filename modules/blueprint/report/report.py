@@ -1,16 +1,17 @@
-from sqlalchemy.orm import selectinload, joinedload
-
-from utility.model import Volo, Aereo
-from utility.forms import ReportForm, EditForm
-import time
 import logging
-from utility.model import Volo_rep
-from common_py.commonLiveReport import pagination_func
-from common_py.common import query_updater, aircraft_cache
+import time
 from typing import List
+
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
+
+from common_py.common import query_updater, aircraft_cache
+from common_py.commonLiveReport import pagination_func
+from utility.forms import ReportForm, EditForm
+from utility.model import Volo, Aereo
+from utility.model import Volo_rep
 
 report_bp = APIRouter()
 templates = Jinja2Templates(directory="modules/blueprint/report/templates")
@@ -64,8 +65,8 @@ async def report(request: Request):
         sliced_aircrafts, pagination = await pagination_func(logger=report_bp.logger, page=1, aircrafts=voli_list,
                                                              live=False)
     return templates.TemplateResponse('report.html',
-                                          {"request": request, "form": form, "voli": sliced_aircrafts,
-                                           "pagination": pagination})
+                                      {"request": request, "form": form, "voli": sliced_aircrafts,
+                                       "pagination": pagination})
 
 
 @report_bp.get("/report_table")

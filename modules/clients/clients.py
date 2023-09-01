@@ -1,19 +1,19 @@
 import asyncio
-import aiofiles
-from sqlalchemy.orm import selectinload
-
-from utility.config import RECEIVERS_JSON, CLIENTS_MLAT_JSON, UPDATE_CLIENTS, CLIENTS_JSON, SYNC_JSON
-import ujson
-from common_py.common import query_updater
-from utility.model import Ricevitore, SessionLocal
-from shapely.geometry import Point, Polygon
 import logging
+
+import aiofiles
+import ujson
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from tqdm import tqdm
+
+from common_py.common import query_updater
+from utility.config import RECEIVERS_JSON, CLIENTS_MLAT_JSON, UPDATE_CLIENTS, CLIENTS_JSON, SYNC_JSON
+from utility.model import Ricevitore, SessionLocal
 
 logger = logging.getLogger(__name__)
 session_db = SessionLocal()
-from typing import List, Dict
+from typing import List
 
 
 async def clients():
@@ -62,7 +62,8 @@ async def process_clients():
                     # ric.ip = str(client_readsb[1].split("port")[0].replace(" ", "")),
                     ric.messaggi_al_sec = client_readsb[4]
                     for client_mlat in clients_mlat.values():
-                        if client_mlat["uuid"] and (client_mlat["uuid"] == client_readsb[0] or client_mlat["uuid"][0] == client_readsb[0]):
+                        if client_mlat["uuid"] and (
+                                client_mlat["uuid"] == client_readsb[0] or client_mlat["uuid"][0] == client_readsb[0]):
                             ric.lat = client_mlat["lat"]
                             ric.lon = client_mlat["lon"]
                             ric.name = client_mlat["user"]
@@ -81,7 +82,6 @@ async def process_clients():
                 else:
                     process = True
                     for client_mlat in clients_mlat.values():
-
 
                         if client_mlat["uuid"] and (
                                 client_mlat["uuid"][0][:18] == receiver_readsb[0] == client_readsb[0][:18] or
@@ -139,6 +139,3 @@ async def process_clients():
     result = await session_db.execute(select(Ricevitore))
     ricevitori = result.scalars().all()
     query_updater.ricevitori = ricevitori
-
-
-

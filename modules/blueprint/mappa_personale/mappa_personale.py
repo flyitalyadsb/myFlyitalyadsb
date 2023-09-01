@@ -1,12 +1,13 @@
 import logging
-import time
 import os
+import time
 
-from utility.model import Ricevitore
-from common_py.common import query_updater
 from fastapi import APIRouter, Request, HTTPException
-from starlette.templating import Jinja2Templates
 from fastapi.responses import FileResponse
+from starlette.templating import Jinja2Templates
+
+from common_py.common import query_updater
+from utility.model import Ricevitore
 
 mappa_bp = APIRouter(prefix="/mappa")
 mappa_bp.logger = logging.getLogger(__name__)

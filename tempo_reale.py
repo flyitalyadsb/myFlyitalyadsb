@@ -1,27 +1,28 @@
 import asyncio
 import logging
 import platform
+from uuid import uuid4, UUID
+
+import uvicorn
 from fastapi import FastAPI, Request, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi_pagination import add_pagination
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from starlette.responses import HTMLResponse
 from starlette.templating import Jinja2Templates
 from werkzeug.middleware.proxy_fix import ProxyFix
-from sqlalchemy import select
-from sqlalchemy.orm import joinedload
-from fastapi_pagination import add_pagination
+
 from common_py.common import query_updater
 from modules.add_to_db.add_to_db import add_aircrafts_to_db
 from modules.blueprint.commonMy.commonMy import commonMy_bp, dologin
 from modules.blueprint.live.live import live_bp
+from modules.blueprint.mappa_personale.mappa_personale import mappa_bp
 from modules.blueprint.report.report import report_bp
 from modules.blueprint.utility.utility import utility_bp
-from modules.blueprint.mappa_personale.mappa_personale import mappa_bp
 from modules.clients.clients import clients
 from utility.config import debug
 from utility.model import engine, Base, SessionLocal, SessionData
-import uvicorn
-from uuid import uuid4, UUID
-from fastapi.staticfiles import StaticFiles
-
 
 
 def create_app():
@@ -46,6 +47,7 @@ def create_app():
         if exc.status_code == 400:
             return templates.TemplateResponse("400.html", {"request": request}, status_code=400)
         return HTMLResponse(str(exc.detail), status_code=exc.status_code)
+
     app.include_router(live_bp)
     app.include_router(report_bp)
     app.include_router(utility_bp)
@@ -110,7 +112,6 @@ async def middleware(request: Request, call_next):
         else:
             response = await call_next(request)
             return response
-
 
 
 def fastapi_start():

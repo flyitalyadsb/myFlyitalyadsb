@@ -5,15 +5,16 @@ import logging
 import math
 from math import asin, atan, cos, degrees, radians, sin, sqrt
 from typing import Any, Dict, NamedTuple, Optional, Sequence, Tuple
+
 import aiohttp
 from aioprometheus import Gauge
 from aioprometheus.service import Service
 from flask import session
-from utility.model import Ricevitore
+
 from metrics import Specs
+from utility.model import Ricevitore
 
 ricevitore: Ricevitore = session["ricevitore"]
-
 
 PositionType = Tuple[float, float]
 MetricSpecItemType = Tuple[str, str, str]

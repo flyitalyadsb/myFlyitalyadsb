@@ -1,4 +1,5 @@
 import gzip
+
 from flask import request
 
 GZIP_CONTENT_ENCODING = 'gzip'
@@ -18,9 +19,11 @@ def inflate(func):
     """
     A decorator to inflate content of a single view function
     """
+
     def wrapper(*args, **kwargs):
         _inflate_gzipped_content()
         return func(*args, **kwargs)
+
     wrapper.__name__ = func.__name__
     return wrapper
 

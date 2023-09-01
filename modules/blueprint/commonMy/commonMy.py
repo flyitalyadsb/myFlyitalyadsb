@@ -1,14 +1,16 @@
 import logging
+
 from fastapi import APIRouter, Request
-from utility.forms import LoginForm
-from utility.model import Ricevitore
+from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 from starlette.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
 
+from utility.forms import LoginForm
+from utility.model import Ricevitore
 
 commonMy_bp = APIRouter()
-templates = Jinja2Templates(directory=r"C:\Users\Stage_ut\Desktop\stage-python\myFlyitalyadsb\modules\blueprint\commonMy\templates")
+templates = Jinja2Templates(
+    directory=r"C:\Users\Stage_ut\Desktop\stage-python\myFlyitalyadsb\modules\blueprint\commonMy\templates")
 commonMy_bp.logger = logging.getLogger(__name__)
 
 

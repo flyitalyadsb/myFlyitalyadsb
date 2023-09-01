@@ -1,23 +1,25 @@
-import logging
-import aiohttp
-from utility.config import TIMEOUT, AIRCRAFT_JSON, URL_OPEN, DB_OPEN_DIR, DB_OPEN_ZIP, DB_OPEN, URL_READSB, UNIX_SOCKET, UNIX, FREQUENZA_AGGIORNAMENTO_AEREI
-from utility.model import Aereo, Ricevitore, SessionLocal
-from utility.type_hint import AircraftDataRaw, DbDizionario, AircraftsJson
-import csv
-import ujson
-from cachetools import LRUCache
 import asyncio
-import aiofiles
+import csv
+import logging
 import zipfile
+from copy import deepcopy
 from io import BytesIO
 from typing import List
-from copy import deepcopy
+
+import aiofiles
+import aiohttp
+import ujson
+from cachetools import LRUCache
 from sqlalchemy.future import select
+
+from utility.config import TIMEOUT, AIRCRAFT_JSON, URL_OPEN, DB_OPEN_DIR, DB_OPEN_ZIP, DB_OPEN, URL_READSB, UNIX_SOCKET, \
+    UNIX, FREQUENZA_AGGIORNAMENTO_AEREI
+from utility.model import Aereo, Ricevitore, SessionLocal
+from utility.type_hint import AircraftDataRaw, DbDizionario, AircraftsJson
 
 aircraft_cache = LRUCache(maxsize=100000000)
 
 logger = logging.getLogger("common")
-
 
 
 def unzip_data(data):
@@ -38,6 +40,7 @@ class QueryUpdater:
         self.aircrafts_da_servire: List[int, dict, bool] = [0, {},
                                                             False]  # timestamp, aircrafts con info, in esecuzione
         self.ricevitori: List[Ricevitore] = []
+
     async def get_icao_from_db(self):
         async with SessionLocal() as session_db:
             quer = await session_db.execute(select(Aereo))
@@ -50,6 +53,7 @@ class QueryUpdater:
                 return await response.json()
             else:
                 return {}
+
     async def real_update_query(self):
         if UNIX:
             data = ujson.loads(await self.fetch_data_from_unix())
@@ -74,7 +78,7 @@ class QueryUpdater:
 
             logger.info("used aircrafts.json")
 
-    async def aicrafts_filtered_by_my_receiver(self,session, my=False):
+    async def aicrafts_filtered_by_my_receiver(self, session, my=False):
         filtered_aircrafts = []
         ricevitore: Ricevitore = session.ricevitore
         if my:
@@ -129,8 +133,6 @@ class QueryUpdater:
 
         return data.decode()
 
-
-
     async def update_db(self):
         logger.info("Estrazione database tar1090...")
 
@@ -150,7 +152,3 @@ class QueryUpdater:
 
 
 query_updater = QueryUpdater()
-
-
-
-
