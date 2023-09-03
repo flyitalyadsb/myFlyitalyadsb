@@ -6,7 +6,6 @@ from uuid import uuid4, UUID
 import uvicorn
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi_pagination import add_pagination
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from starlette.responses import HTMLResponse
@@ -53,7 +52,6 @@ def create_app():
     app.include_router(utility_bp)
     app.include_router(commonMy_bp)
     app.include_router(mappa_bp)
-    add_pagination(app)
     app.mount("/static", StaticFiles(directory="static"), name="static")
 
     if platform.system() != "Windows":
@@ -127,7 +125,6 @@ async def run():
     asyncio.get_event_loop().set_debug(False)
 
     await setup_database()
-    await clients()
     if debug:
         await clients()
         return
@@ -136,14 +133,14 @@ async def run():
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
     logger.warning("Dipendenze in partenza...")
-    await asyncio.gather(query_updater.update_db(), query_updater.update_query(True))
+    await asyncio.gather(query_updater.update_query(True))
 
     logger.info("Facciamo partire Fastapi")
     asyncio.create_task(asyncio.to_thread(fastapi_start))
 
     logger.info("Si parte ciurma!")
 
-    await asyncio.gather(add_aircrafts_to_db(), clients(), query_updater.update_query())
+    await asyncio.gather(query_updater.update_db(), add_aircrafts_to_db(), clients(), query_updater.update_query())
 
 
 asyncio.run(run())

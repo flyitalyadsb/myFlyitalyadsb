@@ -10,7 +10,7 @@ from utility.model import Ricevitore
 
 commonMy_bp = APIRouter()
 templates = Jinja2Templates(
-    directory=r"C:\Users\Stage_ut\Desktop\stage-python\myFlyitalyadsb\modules\blueprint\commonMy\templates")
+    directory="modules/blueprint/commonMy/templates")
 commonMy_bp.logger = logging.getLogger(__name__)
 
 

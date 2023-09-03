@@ -87,19 +87,19 @@ async def process_clients():
                                 client_mlat["uuid"][0][:18] == receiver_readsb[0] == client_readsb[0][:18] or
                                 client_mlat["uuid"][:18] == receiver_readsb[0] == client_readsb[0][:18]
                         ):
-                            print(client_mlat["user"])
                             peers = []
                             peer_names = [peer for peer in sync_mlat[client_mlat["user"]]["peers"].keys()]
                             all_possible_peers_query = await session_db.execute(
                                 select(Ricevitore).filter(Ricevitore.name.in_(peer_names)))
 
                             all_possible_peers = all_possible_peers_query.scalars().all()
+
                             peer_dict = {peer.name: peer for peer in all_possible_peers}
                             for ricevitore_name in peer_names:
                                 peer = peer_dict.get(ricevitore_name)
-                            if peer:
-                                print(peer)
-                                ric.peers.append(peer)
+                                if peer:
+                                    ric.peers.append(peer)
+
                             session_db.add(Ricevitore(
                                 linked=True,
                                 lat=client_mlat["lat"],

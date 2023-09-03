@@ -20,10 +20,15 @@
 </style>
 <div class="pagination">
     {% for button in buttons %}
+
         {% if button.get('active') %}
             <span class="active">{{ button.label }}</span>
         {% else %}
-            <a class="pagination_link" href="?page={{ button.page }}">{{ button.label }}</a>
+            {% if button.get('before') %}
+                <a class="pagination_link before" href="?page={{ button.page }}">{{ button.label }}</a>
+            {% else %}
+                <a class="pagination_link after" href="?page={{ button.page }}">{{ button.label }}</a>
+            {% endif %}
         {% endif %}
     {% endfor %}
 </div>

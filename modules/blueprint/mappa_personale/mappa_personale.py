@@ -17,7 +17,7 @@ templates = Jinja2Templates(directory=path)
 
 @mappa_bp.get('/')
 async def mappa(request: Request):
-    return templates.TemplateResponse("index_mappa.html", {"request": request, })
+    return templates.TemplateResponse("index.html", {"request": request, "titolo": "MyFlyitalyadsb"})
 
 
 @mappa_bp.get("/data/aircraft.json")
@@ -25,7 +25,7 @@ async def aircrafts(request: Request):
     session = request.state.session
     aircrafts_json = await query_updater.aicrafts_filtered_by_my_receiver(session, my=True)
     ricevitore: Ricevitore = session.ricevitore
-    json_aircraft = {"messages": ricevitore.messaggi_al_sec if ricevitore.messaggi_al_sec else 0, "now": time.time(),
+    json_aircraft = {"messages": ricevitore.messaggi_al_sec if not ricevitore.messaggi_al_sec is None else 0, "now": time.time(),
                      "aircraft": aircrafts_json}
     return json_aircraft
 
@@ -63,7 +63,7 @@ async def libs(lib: str):
     if os.path.exists(render_path):
         if render_path.endswith(".js"):
             response = FileResponse(os.path.join(path + "/libs/" + lib), media_type="application/javascript")
-        elif render_path.endswith("css"):
+        elif render_path.endswith(".css"):
             response = FileResponse(os.path.join(path + "/libs/" + lib), media_type="text/css")
         else:
             response = FileResponse(os.path.join(path + "/libs/" + lib))
@@ -76,7 +76,7 @@ async def libs(lib: str):
 
 @mappa_bp.get("/style/{style}")
 async def style(style: str):
-    response = FileResponse(os.path.join(path + style), )
+    response = FileResponse(os.path.join(path + style), media_type="text/css")
     response.headers["Cache-Control"] = "public, max-age=7776000"
 
     return response
@@ -123,10 +123,12 @@ async def config(request: Request):
     return rendered_js
 
 
-@mappa_bp.get("/db-{db}/{tag}.js")
-async def get_database(db: str, tag: str):
-    response = FileResponse(os.path.join(path + f"/db-{db}/{tag}.js"), media_type="application/json")
-    response.headers["Cache-Control"] = "public, max-age=7776000"
+@mappa_bp.get("/db2/{tag}.js")
+async def get_database(tag: str):
+    response = FileResponse(os.path.join(path + f"/db2/{tag}.js"))
+    response.headers["Accept-Ranges"] = "bytes"
+    response.headers["Connection"] = "keep-alive"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     response.headers["Content-Encoding"] = "gzip"
 
     return response
@@ -139,6 +141,8 @@ async def general_script(script: str):
     if os.path.exists(render_path):
         if folder == "/images/":
             response = FileResponse(render_path, media_type="image/x-icon")
+        elif render_path.endswith(".css"):
+            response = FileResponse(render_path, media_type="text/css")
         else:
             response = FileResponse(render_path, media_type="application/javascript")
         return response
