@@ -27,7 +27,7 @@ async def report(request: Request):
     session.selected_page = 1
     form = await ReportForm.from_formdata(request)
     if form.is_submitted():
-        query = select(Volo).options(joinedload(Volo.aereo))
+        query = select(Volo).filter(Volo.aereo_id == Aereo.id).options(joinedload(Volo.aereo))
         if form.BInizio.data:
             query = query.filter(Volo.inizio >= int(time.mktime(form.inizio.data.timetuple())))
         if form.BFine.data:
@@ -62,11 +62,11 @@ async def report(request: Request):
             voli_list.append(Volo_rep(volo).to_dict())
         query_updater.reports.append(voli_list)
         session.report = query_updater.reports.index(voli_list)
-        sliced_aircrafts, pagination = await pagination_func(logger=report_bp.logger, page=1, aircrafts=voli_list,
+        sliced_aircrafts, pagination = await pagination_func(logger=report_bp.logger, page=1, aircrafts_func=voli_list,
                                                              live=False)
     return templates.TemplateResponse('report.html',
                                       {"request": request, "form": form, "voli": sliced_aircrafts,
-                                       "pagination": pagination})
+                                       "buttons": pagination})
 
 
 @report_bp.get("/report_table")

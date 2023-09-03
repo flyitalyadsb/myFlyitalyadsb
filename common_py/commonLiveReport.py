@@ -28,7 +28,7 @@ def paginate(page, total, per_page):
         buttons.append({"label": "Precedente", "page": page - 1})
 
     for p in range(start_page, end_page + 1):
-        buttons.append({"label": str(p), "page": p, "active": p == page})
+        buttons.append({"label": str(p), "page": p, "active": p == page, "before": p < page, "after": p > page})
 
     # Aggiungi il bottone "Successivo" se non siamo nell'ultima pagina
     if page < total_pages:
@@ -37,15 +37,15 @@ def paginate(page, total, per_page):
     return buttons
 
 
-async def pagination_func(logger: logging.Logger, page: int, aircrafts: list = query_updater.aircrafts, live=True):
-    total = len(aircrafts)
-    logger.debug(f" len aircrafts passed to pagination_func: {len(aircrafts)} ")
+async def pagination_func(logger: logging.Logger, page: int, aircrafts_func: list = query_updater.aircrafts, live=True):
+    total = len(aircrafts_func)
+    logger.debug(f" len aircrafts passed to pagination_func: {len(aircrafts_func)} ")
     if page != 0:
         start = (page - 1) * PER_PAGE
     else:
         start = 0
     end = start + PER_PAGE
-    sliced_aircrafts = aircrafts[start:end]
+    sliced_aircrafts = aircrafts_func[start:end]
     if live:
         sliced_aircrafts = await getINFO_or_add_aircraft_total(logger, sliced_aircrafts)
     pagination = paginate(page=page, total=total, per_page=PER_PAGE)

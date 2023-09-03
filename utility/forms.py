@@ -1,4 +1,4 @@
-from wtforms import StringField, SubmitField, BooleanField, DateField, validators, SelectField, PasswordField, form
+from wtforms import StringField, SubmitField, BooleanField, DateField, validators, SelectField, PasswordField
 from wtforms.validators import DataRequired
 from starlette_wtf import StarletteForm
 

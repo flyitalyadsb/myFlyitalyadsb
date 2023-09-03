@@ -1,6 +1,8 @@
 import asyncio
 import logging
 import platform
+import random
+
 import aiohttp
 from fastapi import APIRouter, Request, Response, status
 from fastapi.templating import Jinja2Templates
@@ -31,7 +33,7 @@ async def index(request: Request):
         if form.Mappa_my.data:
             return RedirectResponse("/mappa", status_code=status.HTTP_303_SEE_OTHER)
         elif form.Mappa.data:
-            RedirectResponse("https://mappa.flyitalyadsb.com", status_code=status.HTTP_303_SEE_OTHER)
+            return RedirectResponse("https://mappa.flyitalyadsb.com", status_code=status.HTTP_303_SEE_OTHER)
         elif form.Report.data:
             return RedirectResponse("/report", status_code=status.HTTP_303_SEE_OTHER)
         elif form.Sito.data:
@@ -61,6 +63,18 @@ async def get_peer_info(session_db, uuid):
         }
 
 
+def anonymize_coordinates(item):
+    variation = random.uniform(-0.01, 0.01)
+    result = []
+    for data in item:
+        result.append({
+            'lat': float(data['lat']) + variation,
+            'lon': float(data['lon']) + variation,
+            'nome': data['nome']
+        })
+    return result
+
+
 async def get_peers_of_ricevitore(session_db, ricevitore_id):
     result = await session_db.execute(
         select(Ricevitore).filter_by(id=ricevitore_id).options(selectinload(Ricevitore.peers)))
@@ -75,11 +89,10 @@ async def stazioni(request: Request):
     ricevitore: Ricevitore = session.ricevitore
     stazione_centrale_data = await get_peer_info(session_db, ricevitore.uuid)
     peers = await get_peers_of_ricevitore(session_db, ricevitore.id)
-    print(ricevitore.peers)
     stazioni_collegate_data = await asyncio.gather(
         *(get_peer_info(session_db, ricevitore.uuid) for ricevitore in peers)
     )
-
+    stazioni_collegate_data = anonymize_coordinates(stazioni_collegate_data)
     rendered_js = templates.TemplateResponse(
         "config.js.jinja2",
         {
@@ -139,17 +152,18 @@ async def disattiva(request: Request, modalita: str):
 
 
 @live_bp.get("/table")
-async def table_pagination_func(request: Request,  posizione: str = False, only_mine: str = False, page: int = 1, sort_by: str = "hex", search: str = None):
+async def table_pagination_func(request: Request, posizione: str = False, only_mine: str = False, page: int = 1,
+                                sort_by: str = "hex", search: str = None):
     session = request.state.session
 
     user: Ricevitore = session.ricevitore
-    if posizione: #todo gestire internamente la richiesta
+    if posizione:  # todo gestire internamente la richiesta
         custom_readsb_url = f"http://readsb:30152/?circle={user.lat if user.lat else user.lat_avg},{user.lon if user.lon else user.lon_avg},{int(posizione)}"
         if platform.system() == "Windows":
             custom_readsb_url = f"https://mappa.flyitalyadsb.com/re-api/?circle={user.lat if user.lat else user.lat_avg},{user.lon if user.lon else user.lon_avg},{int(posizione)}"
         async with aiohttp.ClientSession() as session_http:
             data = await query_updater.fetch_data_from_url(live_bp.logger, custom_readsb_url, session_http)
-        #print(data["resultCount"])
+        # print(data["resultCount"])
         aircs = data["aircraft"]
         sliced_aircrafts, pagination = await pagination_func(logger=live_bp.logger, page=page,
                                                              aircrafts_func=aircs)
@@ -161,6 +175,7 @@ async def table_pagination_func(request: Request,  posizione: str = False, only_
         sliced_aircrafts, pagination = await pagination_func(logger=live_bp.logger, page=page,
                                                              aircrafts_func=query_updater.aircrafts)
     if search:
+        print(sliced_aircrafts)
         data_filtered = [row for row in sliced_aircrafts if
                          search in row['hex'] or
                          (row["info"] is not None and row["info"].Registration is not None and search in row[
@@ -170,7 +185,8 @@ async def table_pagination_func(request: Request,  posizione: str = False, only_
                          (row["info"] is not None and row['info'].Operator is not None and search in row[
                              'info'].Operator)]
 
-        sliced_aircrafts, pagination = await pagination_func(logger=live_bp.logger, page=page, aircrafts_func=data_filtered,
+        sliced_aircrafts, pagination = await pagination_func(logger=live_bp.logger, page=page,
+                                                             aircrafts_func=data_filtered,
                                                              live=False)
 
     if sort_by == "Registrazione":
@@ -180,7 +196,8 @@ async def table_pagination_func(request: Request,  posizione: str = False, only_
         sliced_aircrafts.sort(
             key=lambda x: x["info"].Operator if x["info"] is not None and x["info"].Operator is not None else "")
     return templates.TemplateResponse("table.html",
-                                      {"request": request, "aircrafts": sliced_aircrafts, "buttons": pagination}, headers={"Cache-Control": "no-store", "Expires": "0"})
+                                      {"request": request, "aircrafts": sliced_aircrafts, "buttons": pagination},
+                                      headers={"Cache-Control": "no-store", "Expires": "0"})
 
 
 @live_bp.get("/data_raw")
