@@ -1,6 +1,5 @@
 from typing import Union, List, Optional, Any
 from pydantic import BaseModel
-from utility.model import Aereo_rep
 
 
 class DbDizionario:  # database opensky
@@ -206,7 +205,7 @@ class AircraftsJson:
     messages: int
     aircraft: List[AircraftDataRaw]
 
-class info(BaseModel):
+class info:
     id: int
     icao: str
     Registration: str
@@ -215,60 +214,20 @@ class info(BaseModel):
     CivMil: bool
     Operator: str
 
+class AircraftsJsonDaServire:
+    """
+    This class represents the structure of '/json/aircrafts.json modified by adding info from opensky db'.
 
-class Aircraft_da_servire(BaseModel):
-    hex: str
-    type: str = None
-    flight: str = None
-    alt_baro: Union[int, str] = None
-    alt_geom: int = None
-    gs: float = None
-    ias: int = None
-    tas: int = None
-    mach: float = None
-    track: float = None
-    track_rate: float = None
-    roll: float = None
-    mag_heading: float = None
-    true_heading: float = None
-    baro_rate: int = None
-    geom_rate: int = None
-    squawk: str = None
-    emergency: str = None
-    category: str = None
-    nav_qnh: float = None
-    nav_altitude_mcp: int = None
-    nav_altitude_fms: int = None
-    nav_heading: float = None
-    nav_modes: List[str] = None
-    lat: float = None
-    lon: float = None
-    nic: int = None
-    rc: int = None
-    seen_pos: float = None
-    version: int = None
-    nic_baro: int = None
-    nac_p: int = None
-    nac_v: int = None
-    sil: int = None
-    sil_type: str = None
-    gva: int = None
-    sda: int = None
-    mlat: List[str] = None
-    tisb: List[str] = None
-    messages: int = None
-    seen: float = None
-    rssi: float = None
-    alert: int = None
-    spi: int = None
-    wd: Optional[int] = None
-    ws: Optional[int] = None
-    oat: Optional[float] = None
-    tat: Optional[float] = None
-    acas_ra: Any = None
-    gpsOkBefore: Any = None
-    ReceiversUuids: str = None
-    info: info = None
+    Attributes:
+        - now: The current timestamp.
+        - messages: The number of messages.
+        - aircraft: A list containing data for each individual aircraft.
+        - info: an instance of DbDizionario
+    """
+    now: int
+    messages: int
+    aircraft: List[AircraftDataRaw]
+    info: info
 
 
 

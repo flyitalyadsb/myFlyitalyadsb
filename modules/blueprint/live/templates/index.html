@@ -8,9 +8,9 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"/>
- <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-     crossorigin=""/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""/>
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 
 <p id="benvenuto" class="display-1 p-3">Aerei in arrivo....</p>
@@ -45,6 +45,13 @@
         </div>
     </div>
 </div>
+{% with message = get_flashed_messages(request) %}
+    {% if message %}
+        <div class="success alert-success alert-dismissible show" role="alert">
+            {{ message }}
+        </div>
+    {% endif %}
+{% endwith %}
 <br>
 <div class="row">
     <div class="col">
@@ -218,6 +225,7 @@
             event.preventDefault();
             filter = $(this).find('input[name="search"]').val();
             sort = $(this).find('select[name="sort_by"]').val();
+            currentPage = 1
             real_update();
             $("#clear_search").show();
         });
@@ -226,6 +234,7 @@
     $(document).ready(function () {
         $("#slider_form").submit(function (event) {
             event.preventDefault();
+            currentPage = 1
             posizione = $(this).find('input[name="raggio"]').val();
             real_update();
             $("#clear_posizione").show();
@@ -236,7 +245,19 @@
             event.preventDefault();
             only_mine = $(this).find('select[name="only_mine"]').val();
             if (only_mine === "quelli di tutti") {
-                clear_mio_func()
+                only_mine = false
+                $.ajax({
+                    url: '/disattiva/only_mine',
+                    type: 'POST',
+                    success: function (response) {
+                        $("#clear_mio").hide()
+                        real_update()
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        console.log('Errore nella richiesta AJAX:', textStatus, errorThrown);
+                    }
+                });
+                real_update()
             } else {
                 $('#clear_mio').show();
                 only_mine = true
@@ -282,10 +303,6 @@
         });
     });
     $(document).ready(function () {
-        clear_mio_func()
-    });
-
-    function clear_mio_func() {
         $("#clear_mio").click(function (event) {
             event.preventDefault();
             only_mine = false
@@ -301,7 +318,7 @@
                 }
             });
         });
-    }
+    });
 
     function outputUpdate(value) {
         document.getElementById('selected-raggio').textContent = value;

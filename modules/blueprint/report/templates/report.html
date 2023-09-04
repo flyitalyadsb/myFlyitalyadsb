@@ -1,5 +1,3 @@
-<html lang="it">
-
 <head>
     <link rel="stylesheet" href="/static/style.css">
     <meta charset="UTF-8">
@@ -114,9 +112,9 @@
                 {% endif %}
             {% endfor %}
         </div>
-        <div id="report_voli " class="table-responsive p-3">
-            <table class="table-responsive">
-                <thead>
+        <div id="report_voli " class="p-3 ">
+            <table class="table-responsive table-bordered">
+                <thead class="thead_center">
                 <tr>
                     <th>Registrazione</th>
                     <th>Icao</th>
@@ -132,7 +130,7 @@
 
                 </tr>
                 </thead>
-                <tbody>
+                <tbody class="p-1">
                 {% for volo in voli %}
                     <tr>
                         <td>{{ volo["Registration"] if volo["Registration"] is defined else '' }}</td>
@@ -164,15 +162,15 @@
         </div>
     {% endif %}
 
-    {#
-    {% with message = get_flashed_messages() %}
+
+    {% with message = get_flashed_messages(request) %}
         {% if message %}
-            <div class="warning alert-warning alert-dismissible show" role="alert">
-                {{ message[0] }}
+            <div class="warning alert-success alert-dismissible show" role="alert">
+                {{ message }}
             </div>
         {% endif %}
     {% endwith %}
-#}
+
 
 </div>
 </body>

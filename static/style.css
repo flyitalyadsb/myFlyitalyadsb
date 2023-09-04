@@ -37,6 +37,7 @@
     align-items: center; /* centra l'icona verticalmente */
     transition: background-color 0.3s; /* animazione di transizione per l'hover */
 }
+
 .x-button {
     background-color: #f8f9fa; /* colore di sfondo */
     border: none; /* rimuove il bordo standard */
@@ -49,15 +50,16 @@
     align-items: center; /* centra l'icona verticalmente */
     transition: background-color 0.3s; /* animazione di transizione per l'hover */
 }
-.paper-plane-button:hover .x-button:hover{
+
+.paper-plane-button:hover .x-button:hover {
     background-color: #e2e6ea; /* colore di sfondo al passaggio del mouse */
 }
 
-.paper-plane-button:active .x-button:active{
+.paper-plane-button:active .x-button:active {
     background-color: #ced4da; /* colore di sfondo al click */
 }
 
-.paper-plane-button i .x-button i{
+.paper-plane-button i .x-button i {
     color: #333; /* colore dell'icona */
     font-size: 20px; /* dimensione dell'icona */
 }
@@ -65,7 +67,7 @@
 .custom-dropdown {
     position: relative;
     display: inline-block;
-    border: none    ;
+    border: none;
 }
 
 .dropdown-content {
@@ -84,4 +86,26 @@
 
 #mappa_canvas {
     height: 40vh;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.pagination a, .pagination span {
+    padding: 5px 10px;
+    margin: 0 5px;
+    border: 1px solid #ddd;
+    text-decoration: none;
+    color: #333;
+}
+
+.pagination .active {
+    color: white;
+    background-color: #333;
+}
+.thead_center {
+    justify-content: center;
 }

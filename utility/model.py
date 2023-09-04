@@ -1,6 +1,6 @@
 import datetime
 
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float, Table, PickleType, Uuid, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float, Table, PickleType, Uuid, DateTime, JSON
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship, backref
 from pydantic import BaseModel
@@ -126,7 +126,8 @@ class SessionData(Base):
     __tablename__ = "session_data"
     id = Column(Integer, primary_key=True, autoincrement=True)  # Usiamo l'ID della sessione come chiave primaria
     session_uuid = Column(Uuid)
-    data = Column(PickleType)  # Memorizziamo i dati della sessione serializzati
+    message = Column(String)
+    report = Column(JSON)
     uuid = Column(Integer, ForeignKey('ricevitore.uuid'))
     logged_in = Column(Boolean)
     posizione = Column(Boolean)

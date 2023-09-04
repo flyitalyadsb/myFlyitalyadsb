@@ -11,7 +11,7 @@ from sqlalchemy.orm import joinedload
 from starlette.responses import HTMLResponse
 from starlette.templating import Jinja2Templates
 from werkzeug.middleware.proxy_fix import ProxyFix
-
+from typing import Any
 from common_py.common import query_updater
 from modules.add_to_db.add_to_db import add_aircrafts_to_db
 from modules.blueprint.commonMy.commonMy import commonMy_bp, dologin
@@ -67,9 +67,10 @@ async def setup_database():
 
 
 app = create_app()
-
 logger = logging.getLogger("MAIN")
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+
+
 
 
 @app.middleware("http")
@@ -97,12 +98,21 @@ async def middleware(request: Request, call_next):
             result = await session_db.execute(
                 select(SessionData).options(joinedload(SessionData.ricevitore)).filter_by(session_uuid=session_uuid))
             session: SessionData = result.scalar_one_or_none()
-            logger.debug(f"Selected page before response: {session.selected_page}, url path: {request.url.path}")
-            request.state.session = session
-            if session.logged_in:
-                response = await call_next(request)  # Questo passa il controllo alla route
+            if session:
+                logger.debug(f"Selected page before response: {session.selected_page}, url path: {request.url.path}")
+                request.state.session = session
+                if session.logged_in:
+                    response = await call_next(request)  # Questo passa il controllo alla route
+                else:
+                    response = await dologin(request, next_page=str(request.url))
             else:
+                uuid = uuid4()
+                session = SessionData(session_uuid=uuid)
+                request.state.session = session
                 response = await dologin(request, next_page=str(request.url))
+                response.set_cookie(key="session_uuid", value=uuid, httponly=True)
+                session_db.add(session)
+
             await session_db.commit()
             logger.debug(f"Selected page after response: {session.selected_page}, url path: {request.url.path}")
             await session_db.close()

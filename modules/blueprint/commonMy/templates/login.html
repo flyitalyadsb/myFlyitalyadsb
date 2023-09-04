@@ -80,6 +80,13 @@
             {{ form.submit() }}
             <br>
             <a href="https://flyitalyadsb.com/guida-statistiche">Non conosci la tua uuid?</a>
+            {% with message = get_flashed_messages(request) %}
+                {% if message %}
+                    <div class="success alert-success alert-dismissible show" role="alert">
+                        {{ message }}
+                    </div>
+                {% endif %}
+            {% endwith %}
         </div>
     </div>
     </div>

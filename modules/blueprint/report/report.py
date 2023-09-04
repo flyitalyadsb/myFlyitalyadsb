@@ -10,39 +10,49 @@ from sqlalchemy.orm import joinedload
 from common_py.common import query_updater, aircraft_cache
 from common_py.commonLiveReport import pagination_func
 from utility.forms import ReportForm, EditForm
-from utility.model import Volo, Aereo
+from utility.model import Volo, Aereo, SessionData
 from utility.model import Volo_rep
+from common_py.common import flash, get_flashed_message
 
 report_bp = APIRouter()
 templates = Jinja2Templates(directory="modules/blueprint/report/templates")
 report_bp.logger = logging.getLogger("REPORT")
+templates.env.globals["get_flashed_messages"] = get_flashed_message
 
 
 @report_bp.api_route("/report", methods=["GET", "POST"])
-async def report(request: Request):
+async def report(request: Request, page: int = None):
     pagination = False
     sliced_aircrafts = False
     session_db = request.state.session_db
-    session = request.state.session
+    session: SessionData = request.state.session
     session.selected_page = 1
     form = await ReportForm.from_formdata(request)
+    if page:
+        session.selected_page = page
+        past_report = query_updater.reports[session.report]
+        sliced_aircrafts, pagination = await pagination_func(logger=report_bp.logger, page=page,
+                                                             aircrafts_func=past_report,
+                                                             live=False)
+        return templates.TemplateResponse('report.html',
+                                          {"request": request, "form": form, "voli": sliced_aircrafts,
+                                           "buttons": pagination})
     if form.is_submitted():
         query = select(Volo).filter(Volo.aereo_id == Aereo.id).options(joinedload(Volo.aereo))
         if form.BInizio.data:
-            query = query.filter(Volo.inizio >= int(time.mktime(form.inizio.data.timetuple())))
+            query = query.filter(Volo.inizio >= form.inizio.data)
         if form.BFine.data:
-            query = query.filter(
-                Volo.fine <= int(time.mktime(form.fine.data.timetuple())))  # da datetime.date a timestamp
+            query = query.filter(Volo.fine <= form.fine.data)
         if form.BIcao.data:
-            query = query.filter(Aereo.icao == form.icao.data)
+            query = query.filter(Aereo.icao.ilike(f"%{form.icao.data}%"))
         if form.BRegistration.data:
-            query = query.filter(Aereo.Registration == form.Registration.data)
+            query = query.filter(Aereo.Registration.ilike(f"%{form.Registration.data}%"))
         if form.BModello.data:
-            query = query.filter(Aereo.Type == form.Modello.data)
+            query = query.filter(Aereo.Type.ilike(f"%{form.Modello.data}%"))
         if form.BICAOTypeCode.data:
-            query = query.filter(Aereo.ICAOTypeCode == form.ICAOTypeCode.data.upper())
+            query = query.filter(Aereo.ICAOTypeCode.ilike(f"%{form.ICAOTypeCode.data}%"))
         if form.BOperator.data:
-            query = query.filter(Aereo.Operator == form.Operator.data)
+            query = query.filter(Aereo.Operator.ilike(f"%{form.Operator.data}%"))
         if form.BCivMil.data:
             if form.CivMil.data:
                 query = query.filter(Aereo.CivMil == True)
@@ -53,8 +63,7 @@ async def report(request: Request):
         result = await session_db.execute(query)
         voli: List[Volo] = result.scalars().all()
         if not voli:
-            # flash('Nessun aereo trovato con questi filtri.', 'warning')
-            print("Nessun aereo trovato con questi filtri.")
+            flash(request, 'Nessun aereo trovato con questi filtri.')
             return templates.TemplateResponse('report.html',
                                               {"request": request, "form": form})
         voli_list = []
@@ -67,29 +76,6 @@ async def report(request: Request):
     return templates.TemplateResponse('report.html',
                                       {"request": request, "form": form, "voli": sliced_aircrafts,
                                        "buttons": pagination})
-
-
-@report_bp.get("/report_table")
-async def report_table_pagination_func(request: Request, page: int):
-    session = request.state.session
-    if session.report:
-        voli = query_updater.reports[session.report]
-        sliced_aircrafts, pagination = await pagination_func(report_bp.logger, page, voli, False)
-        return templates.TemplateResponse('report_table.html',
-                                          {"request": request, "voli_dict": sliced_aircrafts, "pagination": pagination})
-    else:
-        return "None"
-
-
-"""
-                {% with message = get_flashed_messages() %}
-                    {% if message %}
-                        <div class="success alert-success alert-dismissible show" role="alert">
-                            {{ message[0] }}
-                        </div>
-                    {% endif %}
-                {% endwith %}
-                """
 
 
 @report_bp.api_route("/editor", methods=["GET", "POST"])
@@ -111,13 +97,13 @@ async def show_or_edit_aircraft(request: Request, icao: str = None):
             await session_db.commit()
             if icao.lower() in aircraft_cache:
                 aircraft_cache.pop(icao.lower())
-            # flash('Aereo modificato con successo.', 'success')
+            flash(request, 'Aereo modificato con successo.')
         else:
             session_db.add(Aereo(icao=icao.upper(), Registration=reg, Type=model, CivMil=civmil, Operator=operator))
             await session_db.commit()
             if icao.lower() in aircraft_cache:
                 aircraft_cache.pop(icao.lower())
-            # flash('Aereo aggiunto con successo.', 'success')
+            flash(request, 'Aereo aggiunto con successo.')
 
     if aereo_db:
         aircraft = aereo_db.repr()

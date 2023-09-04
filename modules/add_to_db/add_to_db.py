@@ -7,6 +7,7 @@ from tqdm import tqdm
 
 from common_py.common import query_updater
 from common_py.commonLiveReport import getINFO_or_add_aircraft_total
+from utility.config import UPDATE_ADD_TO_DB
 from utility.model import SessionLocal, Volo
 
 logger = logging.getLogger(__name__)
@@ -72,4 +73,4 @@ async def add_aircrafts_to_db():
         except Exception as e:
             print(f"Error occurred committing: {e}")
             await session_db.rollback()  # Roll back the transaction in case of errors
-        await asyncio.sleep(5)
+        await asyncio.sleep(UPDATE_ADD_TO_DB)

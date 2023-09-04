@@ -9,21 +9,20 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from starlette.responses import RedirectResponse
-
 from common_py.commonLiveReport import pagination_func, query_updater
 from utility.forms import MenuForm, SliderForm, OnlyMine
 from utility.model import Ricevitore
 from utility.model import SessionData
+from common_py.common import flash, get_flashed_message
 
 live_bp = APIRouter()
-templates = Jinja2Templates(
-    directory="modules/blueprint/live/templates")
+templates = Jinja2Templates(directory="modules/blueprint/live/templates")
+templates.env.globals["get_flashed_messages"] = get_flashed_message
 
 live_bp.logger = logging.getLogger(__name__)
 
 
-@live_bp.get("/", tags=["users"])
-@live_bp.post("/", tags=["users"])
+@live_bp.api_route("/", methods=["GET", "POST"], tags=["users"])
 async def index(request: Request):
     session: SessionData = request.state.session
     form = await MenuForm.from_formdata(request)
@@ -42,8 +41,7 @@ async def index(request: Request):
             return RedirectResponse("https://statistiche.flyitalyadsb.com", status_code=status.HTTP_303_SEE_OTHER)
     ricevitore = session.ricevitore
     if ricevitore and not ricevitore.lon:
-        flash("MLAT e FEED non sincronizzati, utilizzo la posizione media degli aerei ricevuti")
-        # TODO handle this in the template
+        flash(request, "MLAT e FEED non sincronizzati, utilizzo la posizione media degli aerei ricevuti")
     return templates.TemplateResponse('index.html',
                                       {"request": request, "form": form, "posizione": posizione, "mio": mio,
                                        "ricevitore": ricevitore})
@@ -163,7 +161,6 @@ async def table_pagination_func(request: Request, posizione: str = False, only_m
             custom_readsb_url = f"https://mappa.flyitalyadsb.com/re-api/?circle={user.lat if user.lat else user.lat_avg},{user.lon if user.lon else user.lon_avg},{int(posizione)}"
         async with aiohttp.ClientSession() as session_http:
             data = await query_updater.fetch_data_from_url(live_bp.logger, custom_readsb_url, session_http)
-        # print(data["resultCount"])
         aircs = data["aircraft"]
         sliced_aircrafts, pagination = await pagination_func(logger=live_bp.logger, page=page,
                                                              aircrafts_func=aircs)
@@ -175,26 +172,30 @@ async def table_pagination_func(request: Request, posizione: str = False, only_m
         sliced_aircrafts, pagination = await pagination_func(logger=live_bp.logger, page=page,
                                                              aircrafts_func=query_updater.aircrafts)
     if search:
-        print(sliced_aircrafts)
-        data_filtered = [row for row in sliced_aircrafts if
-                         search in row['hex'] or
-                         (row["info"] is not None and row["info"].Registration is not None and search in row[
-                             "info"].Registration) or
+        data_filtered = [row
+                         for row in sliced_aircrafts
+                         if
+                         (search in row['hex']) or
+                         (row["info"] is not None and row["info"].Registration is not None and search in row["info"].Registration) or
                          (row.get('flight') is not None and search in row['flight']) or
                          (row.get('squawk') is not None and search in row['squawk']) or
-                         (row["info"] is not None and row['info'].Operator is not None and search in row[
-                             'info'].Operator)]
+                         (row["info"] is not None and row['info'].Operator is not None and search in row['info'].Operator)
+                         ]
 
         sliced_aircrafts, pagination = await pagination_func(logger=live_bp.logger, page=page,
                                                              aircrafts_func=data_filtered,
                                                              live=False)
-
     if sort_by == "Registrazione":
-        sliced_aircrafts.sort(key=lambda x: x["info"].Registration if x["info"] is not None and x[
-            "info"].Registration is not None else "")
-    elif sort_by == "Operator":
+        sliced_aircrafts.sort(key=lambda x: x["info"].Registration if x["info"] is not None and x["info"].Registration is not None else "")
+    elif sort_by == "Operatore":
         sliced_aircrafts.sort(
             key=lambda x: x["info"].Operator if x["info"] is not None and x["info"].Operator is not None else "")
+    elif sort_by == "flight":  # callsign
+        sliced_aircrafts.sort(
+            key=lambda x: x["flight"] if x.get("flight") is not None else "")
+    elif sort_by == "squawk":
+        sliced_aircrafts.sort(
+            key=lambda x: x["squawk"] if x.get("squawk") is not None else "")
     return templates.TemplateResponse("table.html",
                                       {"request": request, "aircrafts": sliced_aircrafts, "buttons": pagination},
                                       headers={"Cache-Control": "no-store", "Expires": "0"})

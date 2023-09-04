@@ -23,7 +23,7 @@
   };
   A.ZSTDDecoder = class {
     init() {
-      if (I) { return I; };
+      if (I) { return I; }
       if ("undefined" != typeof fetch) {
         I = fetch("data:application/wasm;base64," + C);
         if (WebAssembly.instantiateStreaming) {
@@ -47,8 +47,8 @@
     // returns: Uint8Array
     // arguments: Uint8Array with compressed data, optionally the uncompressed size
     decode(A, I=0) {
-      if (!B) { throw new Error("ZSTDDecoder: Await .init() before decoding."); };
-      if (A == null || A.buffer == null || A.byteLength == null) { throw new Error("ZSTDDecoder: first argument needs to be an Uint8Array with compressed data"); };
+      if (!B) { throw new Error("ZSTDDecoder: Await .init() before decoding."); }
+      if (A == null || A.buffer == null || A.byteLength == null) { throw new Error("ZSTDDecoder: first argument needs to be an Uint8Array with compressed data"); }
       const Q = A.byteLength;
       const C = B.exports.malloc(Q);
       g.set(A, C);

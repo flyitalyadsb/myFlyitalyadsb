@@ -7,11 +7,13 @@ from starlette.responses import RedirectResponse
 
 from utility.forms import LoginForm
 from utility.model import Ricevitore
+from common_py.common import flash, get_flashed_message
 
 commonMy_bp = APIRouter()
 templates = Jinja2Templates(
     directory="modules/blueprint/commonMy/templates")
 commonMy_bp.logger = logging.getLogger(__name__)
+templates.env.globals["get_flashed_messages"] = get_flashed_message
 
 
 @commonMy_bp.get('/login')
@@ -33,7 +35,7 @@ async def dologin(request: Request, next_page: str = None, uuid: str = None):
             request.state.session.uuid = uuid
             request.state.ricevitore = check_exist
         else:
-            # flash('UUID errata', 'warning')
+            flash(request, 'UUID errata')
             return templates.TemplateResponse("login.html", {"request": request, "form": form})
 
         return RedirectResponse(url=request.state.session.next)

@@ -45,6 +45,13 @@
                         {{ form.submit(class="btn btn-primary", value="Invia") }}
                     </div>
                 </form>
+                {% with message = get_flashed_messages(request) %}
+                    {% if message %}
+                        <div class="success alert-success alert-dismissible show" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endif %}
+                {% endwith %}
 
             </div>
         </div>

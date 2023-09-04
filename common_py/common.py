@@ -1,20 +1,22 @@
 import asyncio
 import csv
 import logging
+import time
 import zipfile
 from copy import deepcopy
 from io import BytesIO
 from typing import List
-
+from copy import deepcopy
 import aiofiles
 import aiohttp
 import ujson
 from cachetools import LRUCache
 from sqlalchemy.future import select
-
+from fastapi import Request
+from typing import Any
 from utility.config import TIMEOUT, AIRCRAFT_JSON, URL_OPEN, DB_OPEN_DIR, DB_OPEN_ZIP, DB_OPEN, URL_READSB, UNIX_SOCKET, \
     UNIX, FREQUENZA_AGGIORNAMENTO_AEREI
-from utility.model import Aereo, Ricevitore, SessionLocal
+from utility.model import Aereo, Ricevitore, SessionLocal, SessionData
 from utility.type_hint import AircraftDataRaw, DbDizionario, AircraftsJson
 
 aircraft_cache = LRUCache(maxsize=100000000)
@@ -25,6 +27,18 @@ logger = logging.getLogger("common")
 def unzip_data(data):
     with BytesIO(data) as bio, zipfile.ZipFile(bio) as zip_file:
         zip_file.extractall(DB_OPEN_DIR)
+
+
+def flash(request: Request, message: Any) -> None:
+    session: SessionData = request.state.session
+    session.message = message
+
+
+def get_flashed_message(request: Request):
+    session: SessionData = request.state.session
+    message = deepcopy(session.message)
+    session.message = ""
+    return message
 
 
 class QueryUpdater:

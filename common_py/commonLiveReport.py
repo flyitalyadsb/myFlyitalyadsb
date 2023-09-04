@@ -7,12 +7,12 @@ from sqlalchemy.engine import Result
 from common_py.common import query_updater, aircraft_cache
 from utility.config import PER_PAGE, UPDATE_TOTAL
 from utility.model import Aereo, SessionLocal
-from utility.type_hint import DbDizionario
+from typing import List, Dict, Tuple, Any
 
 session = SessionLocal()
 
 
-def paginate(page, total, per_page):
+def paginate(page, total, per_page) -> List[Dict]:
     total_pages = (total // per_page) + (1 if total % per_page > 0 else 0)
 
     # Numero di bottoni da mostrare prima e dopo la pagina corrente
@@ -37,7 +37,14 @@ def paginate(page, total, per_page):
     return buttons
 
 
-async def pagination_func(logger: logging.Logger, page: int, aircrafts_func: list = query_updater.aircrafts, live=True):
+async def pagination_func(
+    logger: logging.Logger,
+    page: int,
+    aircrafts_func: List[Any],
+    live=True
+) -> Tuple[List[Dict], List[Dict]]:
+
+
     total = len(aircrafts_func)
     logger.debug(f" len aircrafts passed to pagination_func: {len(aircrafts_func)} ")
     if page != 0:

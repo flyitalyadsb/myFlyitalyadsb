@@ -17,7 +17,6 @@ CLIENTS_MLAT_JSON = "/mlat/clients.json"
 DB_OPEN_DIR = "../dati/"
 DB_OPEN_ZIP = "/dati/open.zip"
 TIMEOUT = 3
-FREQUENZA_AGGIORNAMENTO_AEREI = 0.2
 
 if platform.system() == "Windows":
     AIRCRAFT_JSON = "./windows/json/aircraft.json"
@@ -32,11 +31,13 @@ if platform.system() == "Windows":
 URL_OPEN = "https://opensky-network.org/datasets/metadata/aircraftDatabase.zip"
 DB_OPEN = DB_OPEN_DIR + "media/data/samples/metadata/aircraftDatabase.csv"
 
-UPDATE_TOTAL = 0.5
 URL_READSB = "https://mappa.flyitalyadsb.com/re-api/?all"
 
 PER_PAGE = 50
 UNIX = False
 UNIX_SOCKET = "unix:/run/readsb/api.sock"
 
-UPDATE_CLIENTS = 10 #seconds
+UPDATE_TOTAL = 0.5
+UPDATE_CLIENTS = 30
+FREQUENZA_AGGIORNAMENTO_AEREI = 0.2
+UPDATE_ADD_TO_DB = 25
