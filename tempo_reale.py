@@ -1,4 +1,5 @@
 import asyncio
+import atexit
 import logging
 import platform
 from uuid import uuid4, UUID
@@ -11,7 +12,7 @@ from sqlalchemy.orm import joinedload
 from starlette.responses import HTMLResponse
 from starlette.templating import Jinja2Templates
 from werkzeug.middleware.proxy_fix import ProxyFix
-from typing import Any
+
 from common_py.common import query_updater
 from modules.add_to_db.add_to_db import add_aircrafts_to_db
 from modules.blueprint.commonMy.commonMy import commonMy_bp, dologin
@@ -68,9 +69,6 @@ async def setup_database():
 
 app = create_app()
 logger = logging.getLogger("MAIN")
-
-
-
 
 
 @app.middleware("http")
@@ -131,12 +129,26 @@ def fastapi_start():
         uvicorn.run(app, host="localhost", port=830)
 
 
+result = ""
+
+
+def print_result():
+    print(result)
+
+
+atexit.register(print_result)
+
+
 async def run():
+    global result
     asyncio.get_event_loop().set_debug(False)
 
     await setup_database()
+
     if debug:
         await clients()
+        asyncio.get_event_loop().set_debug(True)
+        atexit.register(print_result)
         return
 
     if platform.system() == "Windows":
@@ -144,13 +156,13 @@ async def run():
 
     logger.warning("Dipendenze in partenza...")
     await asyncio.gather(query_updater.update_query(True))
-
     logger.info("Facciamo partire Fastapi")
     asyncio.create_task(asyncio.to_thread(fastapi_start))
 
     logger.info("Si parte ciurma!")
 
-    await asyncio.gather(query_updater.update_db(), add_aircrafts_to_db(), clients(), query_updater.update_query())
+    result = await asyncio.gather(query_updater.update_db(), add_aircrafts_to_db(), clients(),
+                                  query_updater.update_query())
 
 
 asyncio.run(run())

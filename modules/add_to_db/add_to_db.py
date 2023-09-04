@@ -9,9 +9,9 @@ from common_py.common import query_updater
 from common_py.commonLiveReport import getINFO_or_add_aircraft_total
 from utility.config import UPDATE_ADD_TO_DB
 from utility.model import SessionLocal, Volo
+from typing import List
 
 logger = logging.getLogger(__name__)
-from typing import List
 
 session_db = SessionLocal()
 
@@ -24,17 +24,20 @@ async def add_to_db(aircraft, now):
         volo = Volo(aereo_id=aircraft["info"].id, inizio=now,
                     fine=now, traccia_conclusa=False)
 
+    check_or_add_receivers(volo, aircraft)
+
+    session_db.add(volo)
+
+
+def check_or_add_receivers(volo: Volo, aircraft):
     if "recentReceiverIds" in aircraft.keys() and len(aircraft["recentReceiverIds"]) > 0:
-        ricevitori_dict = {ricevitore.uuid: ricevitore for ricevitore in query_updater.ricevitori}
+        ricevitori_dict = {ricevitore.uuid[:18]: ricevitore for ricevitore in query_updater.ricevitori}
         for uuid in aircraft["recentReceiverIds"]:
             ricevitore_class = ricevitori_dict.get(uuid)
             if ricevitore_class:
-                volo.ricevitori.append(ricevitore_class)
-
+                volo.ricevitore.append(ricevitore_class)
     else:
         logger.debug("recentReceiverIds no in aircraft keys")
-
-    session_db.add(volo)
 
 
 async def add_aircrafts_to_db():
@@ -54,6 +57,7 @@ async def add_aircrafts_to_db():
                 now = datetime.datetime.fromtimestamp(query_updater.data["now"])
                 k = volo_dict.get(aircraft["info"].id)
                 if k:
+                    check_or_add_receivers(k, aircraft)
                     if now - k.fine > datetime.timedelta(seconds=25 * 60):
                         if k.traccia_conclusa:
                             await add_to_db(aircraft, now)

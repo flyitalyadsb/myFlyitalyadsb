@@ -190,7 +190,7 @@ async def table_pagination_func(request: Request, posizione: str = False, only_m
     elif sort_by == "Operatore":
         sliced_aircrafts.sort(
             key=lambda x: x["info"].Operator if x["info"] is not None and x["info"].Operator is not None else "")
-    elif sort_by == "flight":  # callsign
+    elif sort_by == "flight":
         sliced_aircrafts.sort(
             key=lambda x: x["flight"] if x.get("flight") is not None else "")
     elif sort_by == "squawk":

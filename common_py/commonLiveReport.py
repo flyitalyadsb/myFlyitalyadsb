@@ -9,6 +9,8 @@ from utility.config import PER_PAGE, UPDATE_TOTAL
 from utility.model import Aereo, SessionLocal
 from typing import List, Dict, Tuple, Any
 
+from utility.type_hint import DbDizionario
+
 session = SessionLocal()
 
 
@@ -84,15 +86,13 @@ async def update_cache_for_added_aircrafts(aicraft_da_aggiungere):
         aircraft_cache[icao.lower()] = info.repr()
 
 
-async def getINFO_or_add_aircraft_total(logger: logging.Logger, sliced_aircrafts=None):  # -> List[AircraftData]
+async def getINFO_or_add_aircraft_total(logger: logging.Logger, sliced_aircrafts=None):
     ac_presenti_nel_db = []
     aicraft_da_aggiungere = []
-    # print(f"len getINFO_or_add_aircraft_total sliced_aircrafts: {len(sliced_aircrafts)}")
     if sliced_aircrafts:
         aircrafts = sliced_aircrafts
     else:
         aircrafts = query_updater.aircrafts
-    # print(f"len getINFO_or_add_aircraft_total aircrafts: {len(aircrafts)}")
     if not query_updater.aircrafts_da_servire[2] and time.time() - query_updater.aircrafts_da_servire[0] > UPDATE_TOTAL:
         query_updater.aircrafts_da_servire[2] = True
 

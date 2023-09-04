@@ -1,16 +1,16 @@
 import datetime
 
+from pydantic import BaseModel
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float, Table, PickleType, Uuid, DateTime, JSON
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship, backref
-from pydantic import BaseModel
 
-DATABASE_URL = "sqlite+aiosqlite:///tempo_reale3.sqlite"
+DATABASE_URL = "sqlite+aiosqlite:///db.sqlite"
 
 engine = create_async_engine(DATABASE_URL, echo=False, future=True)
 SessionLocal = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False, autoflush=False)
 Base = declarative_base()
-# isolation_level = "READ UNCOMMITTED"
+
 
 
 class Aereo(Base):
@@ -76,6 +76,12 @@ class Ricevitore(Base):
                          backref='connected_to')
 
 
+ricevitori_voli = Table('ricevitori_voli', Base.metadata,
+                        Column('volo_id', Integer, ForeignKey('volo.id'), primary_key=True),
+                        Column('ricevitore_id', Integer, ForeignKey('ricevitore.id'), primary_key=True)
+                        )
+
+
 class Volo(Base):
     __tablename__ = "volo"
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -85,13 +91,7 @@ class Volo(Base):
     fine = Column(DateTime)
     squawk = Column(String(40))
     traccia_conclusa = Column(Boolean())
-
-
-ricevitori_voli = Table('ricevitori_voli', Base.metadata,
-                        Column('volo_id', Integer, ForeignKey('volo.id'), primary_key=True),
-                        Column('ricevitore_id', Integer, ForeignKey('ricevitore.id'), primary_key=True)
-                        )
-Volo.ricevitore = relationship('Ricevitore', secondary=ricevitori_voli, backref=backref('voli', lazy=True))
+    ricevitore = relationship('Ricevitore', secondary=ricevitori_voli, backref=backref('voli', lazy=True))
 
 
 class Volo_rep():
@@ -158,6 +158,8 @@ class RicevitorePydantic(BaseModel):
     linked: bool
     ip: str
     messaggi_al_sec: int
+
+
 class SessionDataPydantic(BaseModel):
     id: int
     session_uuid: str
@@ -172,5 +174,3 @@ class SessionDataPydantic(BaseModel):
     only_mine: bool
     modalita: dict
     ricevitore: RicevitorePydantic
-
-
