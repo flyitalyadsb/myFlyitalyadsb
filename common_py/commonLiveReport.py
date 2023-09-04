@@ -3,6 +3,7 @@ import time
 
 from sqlalchemy import select
 from sqlalchemy.engine import Result
+from tqdm import tqdm
 
 from common_py.common import query_updater, aircraft_cache
 from utility.config import PER_PAGE, UPDATE_TOTAL
@@ -96,7 +97,7 @@ async def getINFO_or_add_aircraft_total(logger: logging.Logger, sliced_aircrafts
     if not query_updater.aircrafts_da_servire[2] and time.time() - query_updater.aircrafts_da_servire[0] > UPDATE_TOTAL:
         query_updater.aircrafts_da_servire[2] = True
 
-        for aircraft in aircrafts:
+        for aircraft in tqdm(aircrafts, desc="Ottengo le INFO per ciascun aereo"):
             icao: str = aircraft["hex"]
 
             if icao not in aircraft_cache:

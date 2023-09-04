@@ -139,6 +139,17 @@ def print_result():
 atexit.register(print_result)
 
 
+async def sync_clients_and_db():
+    session = SessionLocal()
+    logger.info("Aerei_DB in partenza!")
+    logger.info("Clients in partenza!")
+
+    while True:
+        await add_aircrafts_to_db(session)
+        await clients(session)
+        await asyncio.sleep(5)
+
+
 async def run():
     global result
     asyncio.get_event_loop().set_debug(False)
@@ -146,7 +157,6 @@ async def run():
     await setup_database()
 
     if debug:
-        await clients()
         asyncio.get_event_loop().set_debug(True)
         atexit.register(print_result)
         return
@@ -161,8 +171,7 @@ async def run():
 
     logger.info("Si parte ciurma!")
 
-    result = await asyncio.gather(query_updater.update_db(), add_aircrafts_to_db(), clients(),
-                                  query_updater.update_query())
+    result = await asyncio.gather(query_updater.update_db(), query_updater.update_query(), sync_clients_and_db())
 
 
 asyncio.run(run())

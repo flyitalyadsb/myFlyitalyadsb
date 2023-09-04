@@ -13,6 +13,7 @@ Base = declarative_base()
 
 
 
+
 class Aereo(Base):
     __tablename__ = "aereo"
     id = Column(Integer, primary_key=True, autoincrement=True)

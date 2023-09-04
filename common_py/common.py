@@ -51,7 +51,6 @@ class QueryUpdater:
         self.reports: List = []
         self.aircrafts_da_servire: List[int, dict, bool] = [0, {},
                                                             False]  # timestamp, aircrafts con info, in esecuzione
-        self.ricevitori: List[Ricevitore] = []
 
     async def get_icao_from_db(self):
         async with SessionLocal() as session_db:
@@ -136,11 +135,9 @@ class QueryUpdater:
         await asyncio.to_thread(unzip_data, data)
 
     async def fetch_data_from_unix(self):
-        # Scrivi un messaggio al socket UNIX
-        self.writer.write(b'?all')
+        #todo da sistemare
         await self.writer.drain()
 
-        # Leggi la risposta dal socket UNIX
         data = await self.reader.read(-1)
 
         return data.decode()

@@ -10,7 +10,7 @@ from sqlalchemy.orm import joinedload
 from common_py.common import query_updater, aircraft_cache
 from common_py.commonLiveReport import pagination_func
 from utility.forms import ReportForm, EditForm
-from utility.model import Volo, Aereo, SessionData
+from utility.model import Volo, Aereo, SessionData, ricevitori_voli
 from utility.model import Volo_rep
 from common_py.common import flash, get_flashed_message
 
@@ -59,7 +59,7 @@ async def report(request: Request, page: int = None):
             else:
                 query = query.filter((Aereo.CivMil == None) | (Aereo.CivMil == False))
         if form.only_mine.data:
-            query = query.filter(session.ricevitore in Volo.ricevitori)
+            query = query.join(ricevitori_voli).filter(ricevitori_voli.c.ricevitore_id == session.ricevitore.id)
         result = await session_db.execute(query)
         voli: List[Volo] = result.scalars().all()
         if not voli:

@@ -6,21 +6,14 @@ import ujson
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from tqdm import tqdm
-
-from common_py.common import query_updater
-from utility.config import RECEIVERS_JSON, CLIENTS_MLAT_JSON, UPDATE_CLIENTS, CLIENTS_JSON, SYNC_JSON
-from utility.model import Ricevitore, SessionLocal
+from typing import List
+from utility.config import RECEIVERS_JSON, CLIENTS_MLAT_JSON, CLIENTS_JSON, SYNC_JSON
+from utility.model import Ricevitore
 
 logger = logging.getLogger(__name__)
-session_db = SessionLocal()
-from typing import List
 
 
-async def clients():
-    logger.info("CLIENTS in partenza!")
-    while True:
-        await process_clients()
-        await asyncio.sleep(UPDATE_CLIENTS)
+
 
 
 async def read_file(filename):
@@ -36,14 +29,14 @@ async def read_file(filename):
             return parsed_data
 
 
-async def process_clients():
+async def clients(session):
     receiver_readsb, clients_readsb, clients_mlat, sync_mlat = await asyncio.gather(
         read_file(RECEIVERS_JSON),
         read_file(CLIENTS_JSON),
         read_file(CLIENTS_MLAT_JSON),
         read_file(SYNC_JSON)
     )
-    ric_query = await session_db.execute(select(Ricevitore).options(selectinload(Ricevitore.peers)))
+    ric_query = await session.execute(select(Ricevitore).options(selectinload(Ricevitore.peers)))
     ric_list: List[Ricevitore] = ric_query.scalars().all()
     ric_dict = {ric.uuid: ric for ric in ric_list}
     for receiver_readsb in tqdm(receiver_readsb, desc="Aggiunta CLIENT al db interno"):
@@ -69,14 +62,14 @@ async def process_clients():
                             ric.name = client_mlat["user"]
                             ric.peers = []
                             peer_names = [peer for peer in sync_mlat[client_mlat["user"]]["peers"].keys()]
-                            all_possible_peers_query = await session_db.execute(
+                            all_possible_peers_query = await session.execute(
                                 select(Ricevitore).filter(Ricevitore.name.in_(peer_names)))
                             all_possible_peers = all_possible_peers_query.scalars().all()
 
                             peer_dict = {peer.name: peer for peer in all_possible_peers}
                             for ricevitore_name in peer_names:
                                 peer = peer_dict.get(ricevitore_name)
-                                if peer:
+                                if peer and peer not in ric.peers:
                                     ric.peers.append(peer)
                             ric.linked = True
                 else:
@@ -89,7 +82,7 @@ async def process_clients():
                         ):
                             peers = []
                             peer_names = [peer for peer in sync_mlat[client_mlat["user"]]["peers"].keys()]
-                            all_possible_peers_query = await session_db.execute(
+                            all_possible_peers_query = await session.execute(
                                 select(Ricevitore).filter(Ricevitore.name.in_(peer_names)))
 
                             all_possible_peers = all_possible_peers_query.scalars().all()
@@ -97,10 +90,10 @@ async def process_clients():
                             peer_dict = {peer.name: peer for peer in all_possible_peers}
                             for ricevitore_name in peer_names:
                                 peer = peer_dict.get(ricevitore_name)
-                                if peer:
+                                if peer and peer not in ric.peers:
                                     ric.peers.append(peer)
 
-                            session_db.add(Ricevitore(
+                            session.add(Ricevitore(
                                 linked=True,
                                 lat=client_mlat["lat"],
                                 lon=client_mlat["lon"],
@@ -121,7 +114,7 @@ async def process_clients():
                             process = False
                     if process:
                         if receiver_readsb[0] == client_readsb[0][:18]:
-                            session_db.add(Ricevitore(
+                            session.add(Ricevitore(
                                 uuid=client_readsb[0],
                                 position_counter=receiver_readsb[1],
                                 timed_out_counter=receiver_readsb[2],
@@ -135,7 +128,8 @@ async def process_clients():
                                 messaggi_al_sec=client_readsb[4]
                             ))
 
-    await session_db.commit()
-    result = await session_db.execute(select(Ricevitore))
-    ricevitori = result.scalars().all()
-    query_updater.ricevitori = ricevitori
+    try:
+        await session.commit()
+    except Exception as e:
+        print(f"Error occurred committing: {e}")
+        await session.rollback()  # Roll back the transaction in case of errors
