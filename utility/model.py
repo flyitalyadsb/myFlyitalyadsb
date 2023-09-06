@@ -11,10 +11,8 @@ SessionLocal = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=F
 Base = declarative_base()
 
 
-
-
-class Aereo(Base):
-    __tablename__ = "aereo"
+class Aircraft(Base):
+    __tablename__ = "aircraft"
     id = Column(Integer, primary_key=True, autoincrement=True)
     icao = Column(String(20), nullable=False)
     Registration = Column(String(100))
@@ -26,12 +24,12 @@ class Aereo(Base):
     OperatorIcao = Column(String(80))
 
     def repr(self):
-        repr = Aereo_rep(self.id, self.icao, self.Registration, self.ICAOTypeCode, self.Type, self.CivMil,
-                         self.Operator)
+        repr = Aircraft_rep(self.id, self.icao, self.Registration, self.ICAOTypeCode, self.Type, self.CivMil,
+                            self.Operator)
         return repr
 
 
-class Aereo_rep():
+class Aircraft_rep():
     def __init__(self, id, icao, Registration, ICAOTypeCode, Type, CivMil, Operator):
         self.id: int = id
         self.icao: str = icao
@@ -43,15 +41,15 @@ class Aereo_rep():
 
 
 ricevitore_peers_association = Table('ricevitore_peers', Base.metadata,
-                                     Column('ricevitore_id', Integer, ForeignKey('ricevitore.id'),
+                                     Column('ricevitore_id', Integer, ForeignKey('receiver.id'),
                                             primary_key=True),
-                                     Column('peer_id', Integer, ForeignKey('ricevitore.id'),
+                                     Column('peer_id', Integer, ForeignKey('receiver.id'),
                                             primary_key=True)
                                      )
 
 
-class Ricevitore(Base):
-    __tablename__ = "ricevitore"
+class Receiver(Base):
+    __tablename__ = "receiver"
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(40))
     uuid = Column(String(22), unique=True, nullable=True)
@@ -66,79 +64,76 @@ class Ricevitore(Base):
     lat = Column(Float)
     lon = Column(Float)
     linked = Column(Boolean, default=False)
-    session_data = relationship('SessionData', back_populates='ricevitore')
+    session_data = relationship('SessionData', back_populates='receiver')
     ip = Column(String(40))
-    messaggi_al_sec = Column(Integer)
-    peers = relationship('Ricevitore',
+    messagges_per_sec = Column(Integer)
+    peers = relationship('Receiver',
                          secondary=ricevitore_peers_association,
                          primaryjoin=id == ricevitore_peers_association.c.ricevitore_id,
                          secondaryjoin=id == ricevitore_peers_association.c.peer_id,
                          backref='connected_to')
 
 
-ricevitori_voli = Table('ricevitori_voli', Base.metadata,
-                        Column('volo_id', Integer, ForeignKey('volo.id'), primary_key=True),
-                        Column('ricevitore_id', Integer, ForeignKey('ricevitore.id'), primary_key=True)
-                        )
+flights_receiver = Table('flights_receiver', Base.metadata,
+                         Column('flight_id', Integer, ForeignKey('flight.id'), primary_key=True),
+                         Column('receiver_id', Integer, ForeignKey('receiver.id'), primary_key=True)
+                         )
 
 
-class Volo(Base):
-    __tablename__ = "volo"
+class Flight(Base):
+    __tablename__ = "flight"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    aereo_id = Column(Integer, ForeignKey('aereo.id'), nullable=False)
-    aereo = relationship('Aereo', backref='voli')
-    inizio = Column(DateTime)
-    fine = Column(DateTime)
+    aircraft_id = Column(Integer, ForeignKey('aircraft.id'), nullable=False)
+    aircraft = relationship('Aircraft', backref='flight')
+    start = Column(DateTime)
+    end = Column(DateTime)
     squawk = Column(String(40))
-    traccia_conclusa = Column(Boolean())
-    ricevitore = relationship('Ricevitore', secondary=ricevitori_voli, backref=backref('voli', lazy=True))
+    ended = Column(Boolean())
+    receiver = relationship('Receiver', secondary=flights_receiver, backref=backref('flight', lazy=True))
 
 
 class Volo_rep():
-    def __init__(self, volo: Volo):
+    def __init__(self, volo: Flight):
         self.id: int = volo.id
-        self.icao: str = volo.aereo.icao
-        self.registrazione: str = volo.aereo.Registration
-        self.operator: str = volo.aereo.Operator
-        self.ICAOTypeCode = volo.aereo.ICAOTypeCode
-        self.CivMil = volo.aereo.CivMil
-        self.inizio: datetime.datetime = volo.inizio
-        self.fine: datetime.datetime = volo.fine
+        self.icao: str = volo.aircraft.icao
+        self.registration: str = volo.aircraft.Registration
+        self.operator: str = volo.aircraft.Operator
+        self.ICAOTypeCode = volo.aircraft.ICAOTypeCode
+        self.CivMil = volo.aircraft.CivMil
+        self.start: datetime.datetime = volo.start
+        self.end: datetime.datetime = volo.end
         self.squawk: str = volo.squawk
-        self.traccia_conclusa: bool = volo.traccia_conclusa
+        self.ended: bool = volo.ended
 
     def to_dict(self):
         return {
             "id": self.id,
             "icao": self.icao,
-            "Registration": self.registrazione,
+            "Registration": self.registration,
             "Operator": self.operator,
             "ICAOTypeCode": self.ICAOTypeCode,
             "CivMil": self.CivMil,
-            "inizio": self.inizio,
-            "fine": self.fine,
+            "start": self.start,
+            "end": self.end,
             "squawk": self.squawk,
-            "traccia_conclusa": self.traccia_conclusa
+            "ended": self.ended
         }
 
 
 class SessionData(Base):
     __tablename__ = "session_data"
-    id = Column(Integer, primary_key=True, autoincrement=True)  # Usiamo l'ID della sessione come chiave primaria
+    id = Column(Integer, primary_key=True, autoincrement=True)
     session_uuid = Column(Uuid)
     message = Column(String)
     report = Column(JSON)
-    uuid = Column(Integer, ForeignKey('ricevitore.uuid'))
+    uuid = Column(Integer, ForeignKey('receiver.uuid'))
     logged_in = Column(Boolean)
-    posizione = Column(Boolean)
-    raggio = Column(Integer)
+    position = Column(Boolean)
+    radius = Column(Integer)
     search = Column(String)
     selected_page = Column(Integer)
     filter = Column(String)
     sort = Column(String)
     only_mine = Column(Boolean)
-    modalita = Column(PickleType)
-    ricevitore = relationship('Ricevitore', back_populates='session_data')
-
-
-
+    mode = Column(PickleType)
+    receiver = relationship('Receiver', back_populates='session_data')

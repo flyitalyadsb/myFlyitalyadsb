@@ -11,12 +11,13 @@ from sqlalchemy.orm import selectinload
 from starlette.responses import RedirectResponse
 from common_py.commonLiveReport import pagination_func, query_updater
 from utility.forms import MenuForm, SliderForm, OnlyMine
-from utility.model import Ricevitore
+from utility.model import Receiver
 from utility.model import SessionData
 from common_py.common import flash, get_flashed_message
 
 live_bp = APIRouter()
-templates = Jinja2Templates(directory="modules/blueprint/live/templates")
+path = "modules/blueprint/live/templates"
+templates = Jinja2Templates(directory=path)
 templates.env.globals["get_flashed_messages"] = get_flashed_message
 
 live_bp.logger = logging.getLogger(__name__)
@@ -26,8 +27,8 @@ live_bp.logger = logging.getLogger(__name__)
 async def index(request: Request):
     session: SessionData = request.state.session
     form = await MenuForm.from_formdata(request)
-    posizione = await SliderForm.from_formdata(request)
-    mio = await OnlyMine.from_formdata(request)
+    position = await SliderForm.from_formdata(request)
+    mine = await OnlyMine.from_formdata(request)
     if await form.validate_on_submit():
         if form.Mappa_my.data:
             return RedirectResponse("/mappa", status_code=status.HTTP_303_SEE_OTHER)
@@ -39,20 +40,19 @@ async def index(request: Request):
             return RedirectResponse("https://flyitalyadsb.com", status_code=status.HTTP_303_SEE_OTHER)
         elif form.Grafici.data:
             return RedirectResponse("https://statistiche.flyitalyadsb.com", status_code=status.HTTP_303_SEE_OTHER)
-    ricevitore = session.ricevitore
-    if ricevitore and not ricevitore.lon:
-        flash(request, "MLAT e FEED non sincronizzati, utilizzo la posizione media degli aerei ricevuti")
+    receiver = session.receiver
+    if receiver and not receiver.lon:
+        flash(request, "MLAT and FEED not synced, we use the average position of received aircraft")
     return templates.TemplateResponse('index.html',
-                                      {"request": request, "form": form, "posizione": posizione, "mio": mio,
-                                       "ricevitore": ricevitore})
+                                      {"request": request, "form": form, "position": position, "mio": mine,
+                                       "ricevitore": receiver})
 
 
-path = "modules/blueprint/live/templates"
 
 
 async def get_peer_info(session_db, uuid):
-    query = await session_db.execute(select(Ricevitore).filter_by(uuid=uuid))
-    ric: Ricevitore = query.scalar_one_or_none()
+    query = await session_db.execute(select(Receiver).filter_by(uuid=uuid))
+    ric: Receiver = query.scalar_one_or_none()
     return \
         {
             'lat': ric.lat if ric.lat else ric.lat_avg,
@@ -73,30 +73,30 @@ def anonymize_coordinates(item):
     return result
 
 
-async def get_peers_of_ricevitore(session_db, ricevitore_id):
+async def get_peers_of_ricevitore(session_db, receiver_id):
     result = await session_db.execute(
-        select(Ricevitore).filter_by(id=ricevitore_id).options(selectinload(Ricevitore.peers)))
+        select(Receiver).filter_by(id=receiver_id).options(selectinload(Receiver.peers)))
     ricevitore = result.scalar_one_or_none()
     return ricevitore.peers
 
 
 @live_bp.get("/config.js")
-async def stazioni(request: Request):
+async def stations(request: Request):
     session_db = request.state.session_db
     session = request.state.session
-    ricevitore: Ricevitore = session.ricevitore
-    stazione_centrale_data = await get_peer_info(session_db, ricevitore.uuid)
-    peers = await get_peers_of_ricevitore(session_db, ricevitore.id)
-    stazioni_collegate_data = await asyncio.gather(
+    receiver: Receiver = session.receiver
+    central_station_data = await get_peer_info(session_db, receiver.uuid)
+    peers = await get_peers_of_ricevitore(session_db, receiver.id)
+    synced_station = await asyncio.gather(
         *(get_peer_info(session_db, ricevitore.uuid) for ricevitore in peers)
     )
-    stazioni_collegate_data = anonymize_coordinates(stazioni_collegate_data)
+    synced_station = anonymize_coordinates(synced_station)
     rendered_js = templates.TemplateResponse(
         "config.js.jinja2",
         {
             "request": request,
-            "stazioneCentrale": stazione_centrale_data,
-            "stazioniCollegate": stazioni_collegate_data
+            "stazioneCentrale": central_station_data,
+            "stazioniCollegate": synced_station
         }, media_type="application/javascript"
     )
     return rendered_js
@@ -107,8 +107,8 @@ async def posizion(request: Request):
     session = request.state.session
     form = await SliderForm.from_formdata(request)
     if await form.validate_on_submit():
-        session.posizione = True
-        session.raggio = form.raggio.data
+        session.position = True
+        session.radius = form.raggio.data
         ok = {'data': "success"}
         return ok
     else:
@@ -154,7 +154,7 @@ async def table_pagination_func(request: Request, posizione: str = False, only_m
                                 sort_by: str = "hex", search: str = None):
     session = request.state.session
 
-    user: Ricevitore = session.ricevitore
+    user: Receiver = session.receiver
     if posizione:  # todo gestire internamente la richiesta
         custom_readsb_url = f"http://readsb:30152/?circle={user.lat if user.lat else user.lat_avg},{user.lon if user.lon else user.lon_avg},{int(posizione)}"
         if platform.system() == "Windows":
@@ -170,13 +170,13 @@ async def table_pagination_func(request: Request, posizione: str = False, only_m
                                                              aircrafts_func=custom_aircrafts)
     else:
         sliced_aircrafts, pagination = await pagination_func(logger=live_bp.logger, page=page,
-                                                             aircrafts_func=query_updater.aircrafts)
+                                                             aircrafts_func=query_updater.aircraft)
     if search:
         data_filtered = [row
                          for row in sliced_aircrafts
                          if
                          (search in row['hex']) or
-                         (row["info"] is not None and row["info"].Registration is not None and search in row["info"].Registration) or
+                         (row["info"] is not None and row["info"].registration is not None and search in row["info"].registration) or
                          (row.get('flight') is not None and search in row['flight']) or
                          (row.get('squawk') is not None and search in row['squawk']) or
                          (row["info"] is not None and row['info'].Operator is not None and search in row['info'].Operator)
@@ -186,7 +186,7 @@ async def table_pagination_func(request: Request, posizione: str = False, only_m
                                                              aircrafts_func=data_filtered,
                                                              live=False)
     if sort_by == "Registrazione":
-        sliced_aircrafts.sort(key=lambda x: x["info"].Registration if x["info"] is not None and x["info"].Registration is not None else "")
+        sliced_aircrafts.sort(key=lambda x: x["info"].registration if x["info"] is not None and x["info"].registration is not None else "")
     elif sort_by == "Operatore":
         sliced_aircrafts.sort(
             key=lambda x: x["info"].Operator if x["info"] is not None and x["info"].Operator is not None else "")
@@ -203,4 +203,4 @@ async def table_pagination_func(request: Request, posizione: str = False, only_m
 
 @live_bp.get("/data_raw")
 def all_aircrafts_raw():
-    return query_updater.aircrafts_raw
+    return query_updater.aircraft_raw

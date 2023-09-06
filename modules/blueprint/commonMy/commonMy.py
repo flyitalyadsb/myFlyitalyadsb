@@ -6,7 +6,7 @@ from sqlalchemy import select
 from starlette.responses import RedirectResponse
 
 from utility.forms import LoginForm
-from utility.model import Ricevitore
+from utility.model import Receiver
 from common_py.common import flash, get_flashed_message
 
 commonMy_bp = APIRouter()
@@ -28,7 +28,7 @@ async def dologin(request: Request, next_page: str = None, uuid: str = None):
     form = await LoginForm.from_formdata(request)
     if (request.method == 'POST' and await form.validate_on_submit()) or (Request.method == 'GET' and uuid):
         uuid = uuid.lower() if uuid else form.uuid.data
-        check_exist = await session_db.execute(select(Ricevitore).filter_by(uuid=uuid))
+        check_exist = await session_db.execute(select(Receiver).filter_by(uuid=uuid))
         check_exist = check_exist.scalar_one_or_none()
         if check_exist:
             request.state.session.logged_in = True

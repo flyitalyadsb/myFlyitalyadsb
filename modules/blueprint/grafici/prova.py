@@ -1,7 +1,7 @@
-import aiohttp
+from utility.model import Receiver
 
-GRAFANA_URL = "http://your_grafana_url:3000"
-API_KEY = "YOUR_API_KEY"
+GRAFANA_URL = "http://localhost:3000"
+API_KEY = "sa-prova1-87f3ea35-9838-4f7d-b092-282a5610671a"
 
 headers = {
     "Authorization": f"Bearer {API_KEY}",
@@ -9,39 +9,36 @@ headers = {
 }
 
 
-def create_datasource_for_receiver(receiver_name, session):
-    receiver = get_receiver_info(receiver_name)
-
+async def create_datasource_for_receiver(session_http, ricevitore: Receiver):
     data = {
-        "name": receiver_name,
+        "name": ricevitore.name,
         "type": "postgresql",
-        "url": f"http://your_data_source_url/{receiver_name}",
+        "url": f"http://localhost/{ricevitore.name}",
         "access": "proxy",
-
     }
 
-    async with session.post(f"{GRAFANA_URL}/api/dashboards/db", headers=headers, json=data) as response:
+    async with session_http.post(f"{GRAFANA_URL}/api/datasources", headers=headers, json=data) as response:
         if response.status == 200:
-            print(f"Data source for {receiver_name} created!")
+            print(f"Data source for {ricevitore.name} created!")
         else:
+            resp_text = await response.text()
             print(
-                f"Error creating data source for {receiver_name}. Status Code: {response.status}. Message: {response.text}")
+                f"Error creating data source for {ricevitore.name}. Status Code: {response.status}. Message: {resp_text}")
 
 
-async def create_dashboard_for_receiver(receiver_name, session):
-
+async def create_dashboard_for_receiver(session_http, ricevitore: Receiver):
     dashboard_data = {
         "dashboard": {
-            "title": f"Dashboard for {receiver_name}",
+            "title": f"Dashboard for {ricevitore.name}",
             "panels": [
             ]
         },
-        "folderId": 0,  # Modifica se vuoi mettere la dashboard in una specifica cartella
+        "folderId": 0,
         "overwrite": False
     }
-    async with session.post(f"{GRAFANA_URL}/api/dashboards/db", headers=headers, json=dashboard_data) as response:
+    async with session_http.post(f"{GRAFANA_URL}/api/dashboards/db", headers=headers, json=dashboard_data) as response:
         if response.status == 200:
-            print(f"Dashboard for {receiver_name} created!")
+            print(f"Dashboard for {ricevitore.name} created!")
         else:
             print(
-                f"Error creating dashboard for {receiver_name}. Status Code: {response.status}. Message: {response.text}")
+                f"Error creating dashboard for {ricevitore.name}. Status Code: {response.status}. Message: {response.text}")

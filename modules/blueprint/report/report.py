@@ -1,5 +1,4 @@
 import logging
-import time
 from typing import List
 
 from fastapi import APIRouter, Request
@@ -10,7 +9,7 @@ from sqlalchemy.orm import joinedload
 from common_py.common import query_updater, aircraft_cache
 from common_py.commonLiveReport import pagination_func
 from utility.forms import ReportForm, EditForm
-from utility.model import Volo, Aereo, SessionData, ricevitori_voli
+from utility.model import Flight, Aircraft, SessionData, flights_receiver
 from utility.model import Volo_rep
 from common_py.common import flash, get_flashed_message
 
@@ -38,30 +37,30 @@ async def report(request: Request, page: int = None):
                                           {"request": request, "form": form, "voli": sliced_aircrafts,
                                            "buttons": pagination})
     if form.is_submitted():
-        query = select(Volo).filter(Volo.aereo_id == Aereo.id).options(joinedload(Volo.aereo))
+        query = select(Flight).filter(Flight.aircraft_id == Aircraft.id).options(joinedload(Flight.aircraft))
         if form.BInizio.data:
-            query = query.filter(Volo.inizio >= form.inizio.data)
+            query = query.filter(Flight.start >= form.inizio.data)
         if form.BFine.data:
-            query = query.filter(Volo.fine <= form.fine.data)
+            query = query.filter(Flight.end <= form.fine.data)
         if form.BIcao.data:
-            query = query.filter(Aereo.icao.ilike(f"%{form.icao.data}%"))
+            query = query.filter(Aircraft.icao.ilike(f"%{form.icao.data}%"))
         if form.BRegistration.data:
-            query = query.filter(Aereo.Registration.ilike(f"%{form.Registration.data}%"))
+            query = query.filter(Aircraft.Registration.ilike(f"%{form.Registration.data}%"))
         if form.BModello.data:
-            query = query.filter(Aereo.Type.ilike(f"%{form.Modello.data}%"))
+            query = query.filter(Aircraft.Type.ilike(f"%{form.Modello.data}%"))
         if form.BICAOTypeCode.data:
-            query = query.filter(Aereo.ICAOTypeCode.ilike(f"%{form.ICAOTypeCode.data}%"))
+            query = query.filter(Aircraft.ICAOTypeCode.ilike(f"%{form.ICAOTypeCode.data}%"))
         if form.BOperator.data:
-            query = query.filter(Aereo.Operator.ilike(f"%{form.Operator.data}%"))
+            query = query.filter(Aircraft.Operator.ilike(f"%{form.Operator.data}%"))
         if form.BCivMil.data:
             if form.CivMil.data:
-                query = query.filter(Aereo.CivMil == True)
+                query = query.filter(Aircraft.CivMil is True)
             else:
-                query = query.filter((Aereo.CivMil == None) | (Aereo.CivMil == False))
+                query = query.filter((Aircraft.CivMil is None) | (Aircraft.CivMil is not False))
         if form.only_mine.data:
-            query = query.join(ricevitori_voli).filter(ricevitori_voli.c.ricevitore_id == session.ricevitore.id)
+            query = query.join(flights_receiver).filter(flights_receiver.c.ricevitore_id == session.receiver.id)
         result = await session_db.execute(query)
-        voli: List[Volo] = result.scalars().all()
+        voli: List[Flight] = result.scalars().all()
         if not voli:
             flash(request, 'Nessun aereo trovato con questi filtri.')
             return templates.TemplateResponse('report.html',
@@ -82,8 +81,8 @@ async def report(request: Request, page: int = None):
 async def show_or_edit_aircraft(request: Request, icao: str = None):
     session_db = request.state.session_db
     form: EditForm = await EditForm.from_formdata(request)
-    result = await session_db.execute(select(Aereo).filter_by(icao=icao))
-    aereo_db: Aereo = result.scalar_one_or_none()
+    result = await session_db.execute(select(Aircraft).filter_by(icao=icao))
+    aereo_db: Aircraft = result.scalar_one_or_none()
     if await form.validate_on_submit():
         reg = form.reg.data
         model = form.model.data
@@ -99,7 +98,7 @@ async def show_or_edit_aircraft(request: Request, icao: str = None):
                 aircraft_cache.pop(icao.lower())
             flash(request, 'Aereo modificato con successo.')
         else:
-            session_db.add(Aereo(icao=icao.upper(), Registration=reg, Type=model, CivMil=civmil, Operator=operator))
+            session_db.add(Aircraft(icao=icao.upper(), Registration=reg, Type=model, CivMil=civmil, Operator=operator))
             await session_db.commit()
             if icao.lower() in aircraft_cache:
                 aircraft_cache.pop(icao.lower())

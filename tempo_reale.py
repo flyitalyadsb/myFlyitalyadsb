@@ -2,7 +2,7 @@ import asyncio
 import atexit
 import logging
 import platform
-from uuid import uuid4, UUID
+from uuid import uuid4
 
 import uvicorn
 from fastapi import FastAPI, Request, HTTPException
@@ -21,7 +21,6 @@ from modules.blueprint.mappa_personale.mappa_personale import mappa_bp
 from modules.blueprint.report.report import report_bp
 from modules.blueprint.utility.utility import utility_bp
 from modules.clients.clients import clients
-from utility.config import debug
 from utility.model import engine, Base, SessionLocal, SessionData
 
 
@@ -76,53 +75,40 @@ async def middleware(request: Request, call_next):
     session_db = SessionLocal()
     request.state.session_db = session_db
 
-    logger.debug("Middleware: prima della route")
-    session_uuid = request.cookies.get("session_uuid")
-    if not session_uuid:
-        uuid = uuid4()
-        session = SessionData(session_uuid=uuid)
+    logger.debug("Middleware: before roue")
+
+    session_uuid = request.cookies.get("session_uuid", str(uuid4()))
+
+    if request.url.path not in ["/style.css"]:
+        result = await session_db.execute(
+            select(SessionData).options(joinedload(SessionData.receiver)).filter_by(session_uuid=session_uuid)
+        )
+        session: SessionData = result.scalar_one_or_none()
+
+        if not session:
+            session = SessionData(session_uuid=session_uuid)
+            session_db.add(session)
+
         request.state.session = session
-        response = await dologin(request, next_page=str(request.url))
-        response.set_cookie(key="session_uuid", value=uuid, httponly=True)
-        session_db.add(session)
-        await session_db.commit()
-        await session_db.close()
-        return response
 
-    else:
-        session_uuid = UUID(str(session_uuid))
-        logger.debug(f"Session id trovata! {session_uuid}")
-        if request.url.path not in ["/style.css"]:
-            result = await session_db.execute(
-                select(SessionData).options(joinedload(SessionData.ricevitore)).filter_by(session_uuid=session_uuid))
-            session: SessionData = result.scalar_one_or_none()
-            if session:
-                logger.debug(f"Selected page before response: {session.selected_page}, url path: {request.url.path}")
-                request.state.session = session
-                if session.logged_in:
-                    response = await call_next(request)  # Questo passa il controllo alla route
-                else:
-                    response = await dologin(request, next_page=str(request.url))
-            else:
-                uuid = uuid4()
-                session = SessionData(session_uuid=uuid)
-                request.state.session = session
-                response = await dologin(request, next_page=str(request.url))
-                response.set_cookie(key="session_uuid", value=uuid, httponly=True)
-                session_db.add(session)
-
-            await session_db.commit()
-            logger.debug(f"Selected page after response: {session.selected_page}, url path: {request.url.path}")
-            await session_db.close()
-            return response
+        if not session.logged_in:
+            response = await dologin(request, next_page=str(request.url))
+            response.set_cookie(key="session_uuid", value=session_uuid, httponly=True)
         else:
             response = await call_next(request)
-            return response
+
+        await session_db.commit()
+        logger.debug(f"Selected page after response: {session.selected_page}, url path: {request.url.path}")
+    else:
+        response = await call_next(request)
+
+    await session_db.close()
+    return response
 
 
 def fastapi_start():
     app.logger = logging.getLogger("Fastapi")
-    app.logger.info("Fastapi in partenza!")
+    app.logger.info("Starting Fastapi!")
     if platform.system() != "Windows":
         uvicorn.run(app, host="0.0.0.0", port=83)
     else:
@@ -141,8 +127,8 @@ atexit.register(print_result)
 
 async def sync_clients_and_db():
     session = SessionLocal()
-    logger.info("Aerei_DB in partenza!")
-    logger.info("Clients in partenza!")
+    logger.info("Starting Aerei_DB!")
+    logger.info("Starting Clients!")
 
     while True:
         await add_aircrafts_to_db(session)
@@ -155,21 +141,22 @@ async def run():
     asyncio.get_event_loop().set_debug(False)
 
     await setup_database()
-
+    debug = True
     if debug:
         asyncio.get_event_loop().set_debug(True)
+        await asyncio.gather(query_updater.update_query(True))
+        await sync_clients_and_db()
         atexit.register(print_result)
         return
 
     if platform.system() == "Windows":
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-    logger.warning("Dipendenze in partenza...")
     await asyncio.gather(query_updater.update_query(True))
-    logger.info("Facciamo partire Fastapi")
+    logger.info("Let's start Fastapi")
     asyncio.create_task(asyncio.to_thread(fastapi_start))
 
-    logger.info("Si parte ciurma!")
+    logger.info("Starting all...")
 
     result = await asyncio.gather(query_updater.update_db(), query_updater.update_query(), sync_clients_and_db())
 

@@ -12,9 +12,9 @@ from aioprometheus.service import Service
 from flask import session
 
 from metrics import Specs
-from utility.model import Ricevitore
+from utility.model import Receiver
 
-ricevitore: Ricevitore = session["ricevitore"]
+ricevitore: Receiver = session["ricevitore"]
 
 PositionType = Tuple[float, float]
 MetricSpecItemType = Tuple[str, str, str]

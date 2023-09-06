@@ -14,7 +14,7 @@ from fastapi import Request
 from typing import Any
 from utility.config import TIMEOUT, AIRCRAFT_JSON, URL_OPEN, DB_OPEN_DIR, DB_OPEN_ZIP, DB_OPEN, URL_READSB, UNIX_SOCKET, \
     UNIX, FREQUENZA_AGGIORNAMENTO_AEREI
-from utility.model import Aereo, Ricevitore, SessionLocal, SessionData
+from utility.model import Aircraft, Receiver, SessionLocal, SessionData
 from utility.type_hint import AircraftDataRaw, DbDizionario, AircraftsJson
 
 aircraft_cache = LRUCache(maxsize=100000000)
@@ -39,24 +39,42 @@ def get_flashed_message(request: Request):
     return message
 
 
+async def unzip_db():
+    async with aiofiles.open(DB_OPEN_ZIP, 'rb') as file:
+        data = await file.read()  # Leggi tutto il file asincronamente
+
+    # Esegui l'unzipping in un thread separato
+    await asyncio.to_thread(unzip_data, data)
+
+
+async def download_file(url: str, destination: str) -> None:
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            if response.status == 200:
+                async with aiofiles.open(destination, 'wb') as file:
+                    await file.write(await response.read())
+            else:
+                raise Exception(f"Unable to download the file. Status: {response.status}")
+
+
 class QueryUpdater:
     def __init__(self):
         self.reader: asyncio.StreamReader
         self.writer: asyncio.StreamWriter
-        self.icao_presenti_nel_db: List = []  # elenco icao di cui abbiamo salvato informazioni nel nostro db
+        self.icao_in_database: List = []  # elenco icao di cui abbiamo salvato informazioni nel nostro db
         self.data: AircraftsJson | {} = {}  # aircrafts.json
-        self.aircrafts: List[AircraftDataRaw] = []  # aircrafts di aircrafts.json
-        self.aircrafts_raw: List[AircraftDataRaw] = []  # aircrafts di aircrafts.json
+        self.aircraft: List[AircraftDataRaw] = []  # aircrafts di aircrafts.json
+        self.aircraft_raw: List[AircraftDataRaw] = []  # aircrafts di aircrafts.json
         self.database_open: dict[str:DbDizionario] = {}  # database opensky
         self.reports: List = []
-        self.aircrafts_da_servire: List[int, dict, bool] = [0, {},
-                                                            False]  # timestamp, aircrafts con info, in esecuzione
+        self.aircraft_to_be_served: List[int, dict, bool] = [0, {},
+                                                             False]  # timestamp, aircrafts con info, in esecuzione
 
     async def get_icao_from_db(self):
         async with SessionLocal() as session_db:
-            quer = await session_db.execute(select(Aereo))
+            quer = await session_db.execute(select(Aircraft))
             icao_list = [aereo.icao for aereo in quer.scalars().all()]
-        self.icao_presenti_nel_db = icao_list
+        self.icao_in_database = icao_list
 
     async def fetch_data_from_url(self, logger: logging.Logger, url: str, session) -> dict:
         async with session.get(url, timeout=TIMEOUT) as response:
@@ -75,27 +93,27 @@ class QueryUpdater:
         if data:
             logger.debug("using readsb")
             self.data = data
-            self.aircrafts = deepcopy(self.data["aircraft"])
-            self.aircrafts_raw = self.data["aircraft"]
+            self.aircraft = deepcopy(self.data["aircraft"])
+            self.aircraft_raw = self.data["aircraft"]
 
             logger.debug("Readsb webser Online, using it")
         else:
-            logger.debug("using aircrafts.json")
+            logger.debug("using aircraft.json")
             async with aiofiles.open(AIRCRAFT_JSON, 'r') as file:
                 content = await file.read()
                 self.data = ujson.loads(content)
-                self.aircrafts = deepcopy(self.data["aircraft"])
-                self.aircrafts_raw = self.data["aircraft"]
+                self.aircraft = deepcopy(self.data["aircraft"])
+                self.aircraft_raw = self.data["aircraft"]
 
-            logger.info("used aircrafts.json")
+            logger.info("used aircraft.json")
 
     async def aicrafts_filtered_by_my_receiver(self, session, my=False):
         filtered_aircrafts = []
-        ricevitore: Ricevitore = session.ricevitore
+        ricevitore: Receiver = session.receiver
         if my:
-            aircrafts = self.aircrafts_raw
+            aircrafts = self.aircraft_raw
         else:
-            aircrafts = self.aircrafts
+            aircrafts = self.aircraft
         for aircraft in aircrafts:
             if "recentReceiverIds" in aircraft and ricevitore.uuid[:18] in aircraft["recentReceiverIds"]:
                 filtered_aircrafts.append(aircraft)
@@ -118,22 +136,6 @@ class QueryUpdater:
                 await self.real_update_query()
                 await asyncio.sleep(FREQUENZA_AGGIORNAMENTO_AEREI)
 
-    async def download_file(self, url: str, destination: str) -> None:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                if response.status == 200:
-                    async with aiofiles.open(destination, 'wb') as file:
-                        await file.write(await response.read())
-                else:
-                    raise Exception(f"Unable to download the file. Status: {response.status}")
-
-    async def unzip_db(self):
-        async with aiofiles.open(DB_OPEN_ZIP, 'rb') as file:
-            data = await file.read()  # Leggi tutto il file asincronamente
-
-        # Esegui l'unzipping in un thread separato
-        await asyncio.to_thread(unzip_data, data)
-
     async def fetch_data_from_unix(self):
         #todo da sistemare
         await self.writer.drain()
@@ -149,9 +151,9 @@ class QueryUpdater:
 
         logger.info("Aerei recuperati!...")
 
-        await self.download_file(URL_OPEN, DB_OPEN_ZIP)
+        await download_file(URL_OPEN, DB_OPEN_ZIP)
 
-        await self.unzip_db()
+        await unzip_db()
         async with aiofiles.open(DB_OPEN, mode='r') as db_file:
             content = await db_file.read()
             reader: csv.DictReader = csv.DictReader(content.splitlines())

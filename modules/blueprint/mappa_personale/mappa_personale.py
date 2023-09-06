@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 from starlette.templating import Jinja2Templates
 
 from common_py.common import query_updater
-from utility.model import Ricevitore
+from utility.model import Receiver
 
 mappa_bp = APIRouter(prefix="/mappa")
 mappa_bp.logger = logging.getLogger(__name__)
@@ -24,8 +24,8 @@ async def mappa(request: Request):
 async def aircrafts(request: Request):
     session = request.state.session
     aircrafts_json = await query_updater.aicrafts_filtered_by_my_receiver(session, my=True)
-    ricevitore: Ricevitore = session.ricevitore
-    json_aircraft = {"messages": ricevitore.messaggi_al_sec if not ricevitore.messaggi_al_sec is None else 0, "now": time.time(),
+    ricevitore: Receiver = session.receiver
+    json_aircraft = {"messages": ricevitore.messagges_per_sec if not ricevitore.messagges_per_sec is None else 0, "now": time.time(),
                      "aircraft": aircrafts_json}
     return json_aircraft
 
@@ -33,7 +33,7 @@ async def aircrafts(request: Request):
 @mappa_bp.get("/data/receiver.json")
 async def receiver(request: Request):
     session = request.state.session
-    ricevitore: Ricevitore = session.ricevitore
+    ricevitore: Receiver = session.receiver
     receiver = {
         "lat": ricevitore.lat,
         "lon": ricevitore.lon,
@@ -114,7 +114,7 @@ async def flags(flag: str):
 
 @mappa_bp.get("/config.js")
 async def config(request: Request):
-    ricevitore: Ricevitore = request.state.session.ricevitore
+    ricevitore: Receiver = request.state.session.receiver
     rendered_js = templates.TemplateResponse(os.path.join(path, "/config.js.jinja2"), {
         "request": request,
         "center_lat": ricevitore.lat if ricevitore.lat else ricevitore.lat_avg,
