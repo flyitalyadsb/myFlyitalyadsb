@@ -1,6 +1,5 @@
 import datetime
 
-from pydantic import BaseModel
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float, Table, PickleType, Uuid, DateTime, JSON
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship, backref
@@ -142,36 +141,4 @@ class SessionData(Base):
     ricevitore = relationship('Ricevitore', back_populates='session_data')
 
 
-class RicevitorePydantic(BaseModel):
-    id: int
-    name: str
-    uuid: str
-    position_counter: float
-    timed_out_counter: float
-    lat_min: float
-    lat_max: float
-    lon_min: float
-    lon_max: float
-    lat_avg: float
-    lon_avg: float
-    lat: float
-    lon: float
-    linked: bool
-    ip: str
-    messaggi_al_sec: int
 
-
-class SessionDataPydantic(BaseModel):
-    id: int
-    session_uuid: str
-    ricevitore_uuid: int
-    logged_in: bool
-    posizione: bool
-    selected_page: int
-    filter: str
-    sort: str
-    search: str
-    raggio: int
-    only_mine: bool
-    modalita: dict
-    ricevitore: RicevitorePydantic
