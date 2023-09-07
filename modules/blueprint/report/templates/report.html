@@ -25,47 +25,47 @@
 
 
     </script>
-    <title>Report flights</title>
+    <title>Flights report</title>
 </head>
 <body>
 
-<p class="middle display-1">Report flights</p>
+<p class="middle display-1">Flights report</p>
 <div class="container mt-5">
-    <p class="display-5">Filtra</p>
+    <p class="display-5">Filter</p>
     <form method="post" action="/report" method="POST">
-        {{ form.BInizio }}
-        <label for="inizio">Data Inizio:</label>
-        {{ form.inizio }}
+        {{ form.b_start }}
+        <label for="inizio">Start Date:</label>
+        {{ form.start }}
         <br>
         <br>
-        {{ form.BFine }}
-        <label for="fine">Data Fine:</label>
-        {{ form.fine }}
+        {{ form.b_end }}
+        <label for="fine">End Date:</label>
+        {{ form.end }}
         <br>
         <br>
-        {{ form.BIcao }}
+        {{ form.b_icao }}
         <label for="icao">ICAO:</label>
         {{ form.icao }}
         <br>
         <br>
-        {{ form.BRegistration }}
-        <label for="Registration">Registrazione:</label>
-        {{ form.Registration }}
+        {{ form.b_registration }}
+        <label for="Registration">Registration:</label>
+        {{ form.registration }}
         <br>
         <br>
-        {{ form.BModello }}
-        <label for="Modello">Modello:</label>
-        {{ form.Modello }}
+        {{ form.b_model }}
+        <label for="Modello">Model:</label>
+        {{ form.model }}
         <br>
         <br>
-        {{ form.BICAOTypeCode }}
-        <label for="ICAOTypeCode">Codice ICAO Modello:</label>
-        {{ form.ICAOTypeCode }}
+        {{ form.b_icao_type_code }}
+        <label for="ICAOTypeCode">ICAO Model Code:</label>
+        {{ form.icao_type_code }}
         <br>
         <br>
-        {{ form.BOperator }}
-        <label for="Operator">Operatore:</label>
-        {{ form.Operator }}
+        {{ form.b_operator }}
+        <label for="Operator">Operator:</label>
+        {{ form.operator }}
         <br>
         <br>
         <div class="custom-dropdown">
@@ -73,12 +73,12 @@
                 <i class="fas fa-info-circle"></i>
             </button>
             <div class="dropdown-content">
-                <span class="lead" style="font-size: 0.875em">Seleziona la prima casella per abilitare il controllo militare. Lascia deselezionata la seconda casella per avere gli aerei civili o non ancora classificati, seleziona anche la seconda per avere solo quelli militari.</span>
+                <span class="lead" style="font-size: 0.875em">Select the first box to enable military tracking. Leave the second box unchecked to view civilian or unclassified aircraft; check the second box to view only military aircraft.</span>
             </div>
         </div>
-        {{ form.BCivMil }}
-        <label for="CivMil">Militare:</label>
-        {{ form.CivMil }}
+        {{ form.b_civ_mil }}
+        <label for="CivMil">Military:</label>
+        {{ form.civ_mil }}
         <br>
         <br>
 
@@ -87,7 +87,7 @@
                 <i class="fas fa-info-circle"></i>
             </button>
             <div class="dropdown-content">
-                <span class="lead" style="font-size: 0.875em">Mostra gli aerei ricevuti solo dal tuo ricevitore</span>
+                <span class="lead" style="font-size: 0.875em">Display aircraft received solely from your receiver.</span>
             </div>
         </div>
         <label for="only_mine">MyReceiver:</label>
@@ -148,7 +148,7 @@
                         <td>{{ volo["start"].strftime('%Y-%m-%d %H:%M:%S') if volo["start"] is defined else '' }}</td>
                         <td>{{ volo["end"].strftime('%Y-%m-%d %H:%M:%S') if volo["end"] is defined else '' }}</td>
                         <td>
-                            <a href="https://mappa.flyitalyadsb.com?icao={{ volo['icao'].lower() }}&showTrace={{ volo.inizio.strftime('%Y-%m-%d') }}"
+                            <a href="https://mappa.flyitalyadsb.com?icao={{ volo['icao'].lower() }}&showTrace={{ volo.start.strftime('%Y-%m-%d') }}"
                                class="btn btn-sm btn-outline-secondary">Report</a></td>
                         <td>{{ volo["squawk"] if volo["squawk"] is defined else '' }}</td>
                         <td><a href={{ "https://listaflights.flyitalyadsb.com/editor?icao=" + volo['icao'] }}>Edit info
