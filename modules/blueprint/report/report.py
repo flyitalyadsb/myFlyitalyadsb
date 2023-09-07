@@ -58,7 +58,7 @@ async def report(request: Request, page: int = None):
             else:
                 query = query.filter((Aircraft.civ_mil is None) | (Aircraft.civ_mil is not False))
         if form.only_mine.data:
-            query = query.join(flights_receiver).filter(flights_receiver.c.ricevitore_id == session.receiver.id)
+            query = query.join(flights_receiver).filter(flights_receiver.c.receiver_id == session.receiver.id)
         result = await session_db.execute(query)
         flights: List[Flight] = result.scalars().all()
         if not flights:

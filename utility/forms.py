@@ -27,7 +27,7 @@ class ReportForm(StarletteForm):
     b_icao = BooleanField("ICAO")
     icao = StringField("ICAO")
     b_registration = BooleanField("Registration")
-    Registration = StringField("Registration")
+    registration = StringField("Registration")
     b_model = BooleanField("Model")
     model = StringField("Model")
     b_icao_type_code = BooleanField("ICAO Model Code")

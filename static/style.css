@@ -84,8 +84,8 @@
     display: block;
 }
 
-#mappa_canvas {
-    height: 40vh;
+#canvas_map {
+    height: 30vh;
 }
 
 .pagination {
