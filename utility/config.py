@@ -2,7 +2,12 @@ import platform
 
 debug = False
 
-#path
+HOST = "0.0.0.0"
+PORT = 83
+DEPLOYEMENT_HOST = "localhost"
+DEPLOYEMENT_PORT = 830
+
+# path
 AIRCRAFT_JSON = "/json/aircraft.json"
 RECEIVERS_JSON = "/json/ingest/receivers.json"
 CLIENTS_JSON = "/json/ingest/clients.json"

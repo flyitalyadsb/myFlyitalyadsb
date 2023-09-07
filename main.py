@@ -20,7 +20,7 @@ from modules.blueprint.my_map.my_map import mappa_bp
 from modules.blueprint.report.report import report_bp
 from modules.blueprint.utility.utility import utility_bp
 from modules.clients.clients import clients
-from utility.config import UPDATE, debug
+from utility.config import UPDATE, debug, HOST, PORT, DEPLOYEMENT_PORT, DEPLOYEMENT_HOST
 from utility.model import engine, Base, SessionLocal, SessionData
 
 
@@ -109,9 +109,9 @@ def fastapi_start():
     app.logger = logging.getLogger("Fastapi")
     app.logger.info("Starting Fastapi!")
     if platform.system() != "Windows":
-        uvicorn.run(app, host="0.0.0.0", port=83)
+        uvicorn.run(app, host=DEPLOYEMENT_HOST, port=DEPLOYEMENT_PORT)
     else:
-        uvicorn.run(app, host="localhost", port=830)
+        uvicorn.run(app, host=HOST, port=PORT)
 
 
 result = ""
