@@ -8,14 +8,13 @@ from sqlalchemy.orm import selectinload
 from tqdm import tqdm
 
 from common_py.common import query_updater
-from common_py.commonLiveReport import getINFO_or_add_aircraft_total
+from common_py.commonLiveReport import get_info_or_add_aircraft_total
 from utility.model import Flight, Receiver
 
 logger = logging.getLogger(__name__)
 
 
-async def add_to_db(session: AsyncSession, receivers_dict: Dict[Receiver.uuid: Receiver], aircraft,
-                    now: datetime.datetime):
+async def real_add_aircraft_to_db(session: AsyncSession, receivers_dict: Dict[str, Receiver], aircraft, now: datetime.datetime):
     if "squawk" in aircraft.keys():
         flight = Flight(aircraft_id=aircraft["info"].id, squawk=aircraft["squawk"], start=now,
                         end=now, ended=False)
@@ -23,41 +22,41 @@ async def add_to_db(session: AsyncSession, receivers_dict: Dict[Receiver.uuid: R
         flight = Flight(aircraft_id=aircraft["info"].id, start=now,
                         end=now, ended=False)
 
-    add_receiver_to_flight(flight, aircraft, receivers_dict)
+    add_receivers_to_flight(flight, aircraft, receivers_dict)
 
     session.add(flight)
 
 
 async def add_aircrafts_to_db(session: AsyncSession):
-    aircrafts = await getINFO_or_add_aircraft_total(logger=logger)
+    aircrafts = await get_info_or_add_aircraft_total()
     filter = [aircraft["info"].id for aircraft in aircrafts]
     flight_query = await session.execute(
         select(Flight).options(selectinload(Flight.receiver)).filter(Flight.aircraft_id.in_(filter)).order_by(
             Flight.id.desc()))
     flight_list: List[Flight] = flight_query.scalars().all()
-    flight_dict = {volo.aircraft_id: volo for volo in flight_list}
+    flight_dict = {flight.aircraft_id: flight for flight in flight_list}
 
     result = await session.execute(select(Receiver))
     receivers = result.scalars().all()
     receivers_dict = {receiver.uuid[:18]: receiver for receiver in receivers}
 
-    for aircraft in tqdm(aircrafts, desc="Adding VOLI to internal db"):
+    for aircraft in tqdm(aircrafts, desc="Adding FLIGHTS to internal db"):
         if aircraft["info"].id:
             now = datetime.datetime.fromtimestamp(query_updater.data["now"])
             flight: Flight = flight_dict.get(aircraft["info"].id)
             if flight:
-                add_receiver_to_flight(flight, aircraft, receivers_dict)
+                add_receivers_to_flight(flight, aircraft, receivers_dict)
 
                 if now - flight.end > datetime.timedelta(seconds=25 * 60):
                     if flight.ended:
-                        await add_to_db(session, receivers_dict, aircraft, now)
+                        await real_add_aircraft_to_db(session, receivers_dict, aircraft, now)
                     else:
                         flight.end = now
                         flight.ended = True
                 else:
                     continue
             else:
-                await add_to_db(session, receivers_dict, aircraft, now)
+                await real_add_aircraft_to_db(session, receivers_dict, aircraft, now)
 
         else:
             logger.warning(f"no id: {aircraft}")
@@ -69,7 +68,7 @@ async def add_aircrafts_to_db(session: AsyncSession):
         await session.rollback()  # Roll back the transaction in case of errors
 
 
-def add_receiver_to_flight(flight: Flight, aircraft, receivers_dict: Dict[Receiver.uuid: Receiver]):
+def add_receivers_to_flight(flight: Flight, aircraft, receivers_dict: Dict[str, Receiver]):
     if "recentReceiverIds" in aircraft.keys() and len(aircraft["recentReceiverIds"]) > 0:
         for uuid in aircraft["recentReceiverIds"]:
             receiver = receivers_dict.get(uuid)

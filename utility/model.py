@@ -15,37 +15,37 @@ class Aircraft(Base):
     __tablename__ = "aircraft"
     id = Column(Integer, primary_key=True, autoincrement=True)
     icao = Column(String(20), nullable=False)
-    Registration = Column(String(100))
-    ICAOTypeCode = Column(String(20))
-    Type = Column(String(100))
-    CivMil = Column(Boolean)
-    Operator = Column(String(80))
-    SerialNumber = Column(String(80))
-    OperatorIcao = Column(String(80))
+    registration = Column(String(100))
+    icao_type_code = Column(String(20))
+    type = Column(String(100))
+    civ_mil = Column(Boolean)
+    operator = Column(String(80))
+    serial_number = Column(String(80))
+    operator_icao = Column(String(80))
 
     def repr(self):
-        repr = Aircraft_rep(self.id, self.icao, self.Registration, self.ICAOTypeCode, self.Type, self.CivMil,
-                            self.Operator)
+        repr = AircraftRep(self.id, self.icao, self.registration, self.icao_type_code, self.type, self.civ_mil,
+                           self.operator)
         return repr
 
 
-class Aircraft_rep():
-    def __init__(self, id, icao, Registration, ICAOTypeCode, Type, CivMil, Operator):
+class AircraftRep:
+    def __init__(self, id, icao, registration, icao_type_code, type, civ_mil, operator):
         self.id: int = id
         self.icao: str = icao
-        self.Registration: str = Registration
-        self.ICAOTypeCode: str = ICAOTypeCode
-        self.Type: str = Type
-        self.CivMil: bool = CivMil
-        self.Operator: str = Operator
+        self.registration: str = registration
+        self.icao_type_code: str = icao_type_code
+        self.type: str = type
+        self.civ_mil: bool = civ_mil
+        self.operator: str = operator
 
 
-ricevitore_peers_association = Table('ricevitore_peers', Base.metadata,
-                                     Column('ricevitore_id', Integer, ForeignKey('receiver.id'),
+receiver_peers_association = Table('receiver_peers', Base.metadata,
+                                   Column('receiver_id', Integer, ForeignKey('receiver.id'),
                                             primary_key=True),
-                                     Column('peer_id', Integer, ForeignKey('receiver.id'),
+                                   Column('peer_id', Integer, ForeignKey('receiver.id'),
                                             primary_key=True)
-                                     )
+                                   )
 
 
 class Receiver(Base):
@@ -63,14 +63,14 @@ class Receiver(Base):
     lon_avg = Column(Float)
     lat = Column(Float)
     lon = Column(Float)
-    linked = Column(Boolean, default=False)
+    alt = Column(Float)
     session_data = relationship('SessionData', back_populates='receiver')
     ip = Column(String(40))
     messagges_per_sec = Column(Integer)
     peers = relationship('Receiver',
-                         secondary=ricevitore_peers_association,
-                         primaryjoin=id == ricevitore_peers_association.c.ricevitore_id,
-                         secondaryjoin=id == ricevitore_peers_association.c.peer_id,
+                         secondary=receiver_peers_association,
+                         primaryjoin=id == receiver_peers_association.c.receiver_id,
+                         secondaryjoin=id == receiver_peers_association.c.peer_id,
                          backref='connected_to')
 
 
@@ -92,14 +92,14 @@ class Flight(Base):
     receiver = relationship('Receiver', secondary=flights_receiver, backref=backref('flight', lazy=True))
 
 
-class Volo_rep():
+class FlightRep:
     def __init__(self, volo: Flight):
         self.id: int = volo.id
         self.icao: str = volo.aircraft.icao
-        self.registration: str = volo.aircraft.Registration
-        self.operator: str = volo.aircraft.Operator
-        self.ICAOTypeCode = volo.aircraft.ICAOTypeCode
-        self.CivMil = volo.aircraft.CivMil
+        self.registration: str = volo.aircraft.registration
+        self.operator: str = volo.aircraft.operator
+        self.ICAOTypeCode = volo.aircraft.icao_type_code
+        self.CivMil = volo.aircraft.civ_mil
         self.start: datetime.datetime = volo.start
         self.end: datetime.datetime = volo.end
         self.squawk: str = volo.squawk

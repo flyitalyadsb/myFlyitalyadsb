@@ -1,50 +1,52 @@
+from starlette_wtf import StarletteForm
 from wtforms import StringField, SubmitField, BooleanField, DateField, validators, SelectField, PasswordField
 from wtforms.validators import DataRequired
-from starlette_wtf import StarletteForm
 
 
 class MenuForm(StarletteForm):
-    Mappa = SubmitField('Mappa generale')
-    Mappa_my = SubmitField('La mia mappa')
-    Report = SubmitField('Report')
-    Sito = SubmitField('Fly Italy Adsb')
-    Grafici = SubmitField('Grafici')
+    map = SubmitField('Map')
+    my_map = SubmitField('My Map')
+    report = SubmitField('Report')
+    site = SubmitField('Fly Italy Adsb')
+    graphs = SubmitField('Graphs')
 
 
 class EditForm(StarletteForm):
-    reg = StringField('Registrazione')
-    model = StringField('Modello')
-    civmil = BooleanField('Militare')
-    operator = StringField('Operatore')
-    submit = SubmitField('Modifica')
+    reg = StringField('Registration')
+    model = StringField('Model')
+    civmil = BooleanField('Military')
+    operator = StringField('Operator')
+    submit = SubmitField('Edit')
 
 
 class ReportForm(StarletteForm):
-    BInizio = BooleanField('Data Inizio')
-    inizio = DateField('Data Inizio', format='%Y-%m-%d')
-    BFine = BooleanField('Data Fine')
-    fine = DateField('Data Fine', format='%Y-%m-%d')
-    BIcao = BooleanField("ICAO")
+    b_start = BooleanField('Start Date')
+    start = DateField('Start Date', format='%Y-%m-%d')
+    b_end = BooleanField('End Date')
+    end = DateField('End Date', format='%Y-%m-%d')
+    b_icao = BooleanField("ICAO")
     icao = StringField("ICAO")
-    BRegistration = BooleanField("Registration")
-    Registration = StringField("Registrazione")
-    BModello = BooleanField("Modello")
-    Modello = StringField("Modello")
-    BICAOTypeCode = BooleanField("Codice ICAO Modello")
-    ICAOTypeCode = StringField("Codice ICAO Modello")
-    BOperator = BooleanField("Operatore")
-    Operator = StringField("Operatore")
-    BCivMil = BooleanField("Militare")
-    CivMil = BooleanField("Militare")
-    only_mine = BooleanField("Solo il mio ricevitore")
-    submit = SubmitField("Cerca")
+    b_registration = BooleanField("Registration")
+    Registration = StringField("Registration")
+    b_model = BooleanField("Model")
+    model = StringField("Model")
+    b_icao_type_code = BooleanField("ICAO Model Code")
+    icao_type_code = StringField("ICAO Model Code")
+    b_operator = BooleanField("Operator")
+    operator = StringField("Operator")
+    b_civ_mil = BooleanField("Military")
+    civ_mil = BooleanField("Military")
+    only_mine = BooleanField("Only my receiver")
+    submit = SubmitField("Search")
+
 
 class SliderForm(StarletteForm):
-    raggio = StringField('Distanza dalla mia antenna in km', [validators.Optional()])
+    radius = StringField('Distance from my antenna', [validators.Optional()])
 
 
 class OnlyMine(StarletteForm):
-    only_mine = SelectField('Mostra...', choices=("solo i miei dati", "quelli di tutti"))
+    only_mine = SelectField('Show...', choices=("only my data", "all data"))
+
 
 class LoginForm(StarletteForm):
     uuid = PasswordField('Uuid', validators=[DataRequired()], render_kw={"placeholder": "Uuid", "class": "login-field"})

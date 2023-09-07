@@ -12,7 +12,7 @@ def get_favicon():
                         media_type="image/x-icon")
 
 
-@utility_bp.get("/favicon.ico")
+@utility_bp.get("/favicon/{icon}")
 def get_favicon_from_dir(icon: str):
     return FileResponse(os.path.join("modules", "blueprint", "utility", "templates", "favicon", icon),
                         media_type="image/x-icon")

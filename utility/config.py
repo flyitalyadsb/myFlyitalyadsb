@@ -1,9 +1,4 @@
-import os
 import platform
-SECRET_KEY = os.urandom(32)
-
-
-FIRST_TIME = False
 
 debug = False
 
@@ -38,5 +33,5 @@ UNIX = False
 UNIX_SOCKET = "unix:/run/readsb/api.sock"
 
 UPDATE_TOTAL = 0.5
-FREQUENZA_AGGIORNAMENTO_AEREI = 0.2
+AIRCRAFT_UPDATE_FREQUENCY = 0.2
 UPDATE = 25

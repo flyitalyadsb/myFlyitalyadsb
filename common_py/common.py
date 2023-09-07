@@ -2,20 +2,22 @@ import asyncio
 import csv
 import logging
 import zipfile
-from io import BytesIO
-from typing import List
 from copy import deepcopy
+from io import BytesIO
+from typing import Any
+from typing import List
+
 import aiofiles
 import aiohttp
 import ujson
 from cachetools import LRUCache
-from sqlalchemy.future import select
 from fastapi import Request
-from typing import Any
+from sqlalchemy.future import select
+
 from utility.config import TIMEOUT, AIRCRAFT_JSON, URL_OPEN, DB_OPEN_DIR, DB_OPEN_ZIP, DB_OPEN, URL_READSB, UNIX_SOCKET, \
-    UNIX, FREQUENZA_AGGIORNAMENTO_AEREI
+    UNIX, AIRCRAFT_UPDATE_FREQUENCY
 from utility.model import Aircraft, Receiver, SessionLocal, SessionData
-from utility.type_hint import AircraftDataRaw, DbDizionario, AircraftsJson
+from utility.type_hint import AircraftDataRaw, DatabaseDict, AircraftsJson
 
 aircraft_cache = LRUCache(maxsize=100000000)
 
@@ -41,9 +43,7 @@ def get_flashed_message(request: Request):
 
 async def unzip_db():
     async with aiofiles.open(DB_OPEN_ZIP, 'rb') as file:
-        data = await file.read()  # Leggi tutto il file asincronamente
-
-    # Esegui l'unzipping in un thread separato
+        data = await file.read()
     await asyncio.to_thread(unzip_data, data)
 
 
@@ -57,38 +57,39 @@ async def download_file(url: str, destination: str) -> None:
                 raise Exception(f"Unable to download the file. Status: {response.status}")
 
 
+async def fetch_data_from_url(logger: logging.Logger, url: str, session) -> dict:
+    async with session.get(url, timeout=TIMEOUT) as response:
+        if response.status == 200:
+            return await response.json()
+        else:
+            return {}
+
+
 class QueryUpdater:
     def __init__(self):
         self.reader: asyncio.StreamReader
         self.writer: asyncio.StreamWriter
         self.icao_in_database: List = []  # elenco icao di cui abbiamo salvato informazioni nel nostro db
-        self.data: AircraftsJson | {} = {}  # aircrafts.json
-        self.aircraft: List[AircraftDataRaw] = []  # aircrafts di aircrafts.json
-        self.aircraft_raw: List[AircraftDataRaw] = []  # aircrafts di aircrafts.json
-        self.database_open: dict[str:DbDizionario] = {}  # database opensky
+        self.data: AircraftsJson | {} = {}  # aircraft.json
+        self.aircraft: List[AircraftDataRaw] = []  # aircraft.json' aircraft that is handled in the program
+        self.aircraft_raw: List[AircraftDataRaw] = []  # aircraft.json' aircraft that is not touched
+        self.database_open: dict[str:DatabaseDict] = {}  # database opensky
         self.reports: List = []
-        self.aircraft_to_be_served: List[int, dict, bool] = [0, {},
-                                                             False]  # timestamp, aircrafts con info, in esecuzione
+        self.aircraft_to_be_served: List[float, dict, bool] = [0, {},
+                                                               False]  # timestamp, aircrafts with info, in execution
 
     async def get_icao_from_db(self):
         async with SessionLocal() as session_db:
             quer = await session_db.execute(select(Aircraft))
-            icao_list = [aereo.icao for aereo in quer.scalars().all()]
+            icao_list = [aircraft.icao for aircraft in quer.scalars().all()]
         self.icao_in_database = icao_list
-
-    async def fetch_data_from_url(self, logger: logging.Logger, url: str, session) -> dict:
-        async with session.get(url, timeout=TIMEOUT) as response:
-            if response.status == 200:
-                return await response.json()
-            else:
-                return {}
 
     async def real_update_query(self):
         if UNIX:
             data = ujson.loads(await self.fetch_data_from_unix())
         else:
             async with aiohttp.ClientSession() as session:
-                data = await self.fetch_data_from_url(logger, URL_READSB, session)
+                data = await fetch_data_from_url(logger, URL_READSB, session)
 
         if data:
             logger.debug("using readsb")
@@ -96,7 +97,7 @@ class QueryUpdater:
             self.aircraft = deepcopy(self.data["aircraft"])
             self.aircraft_raw = self.data["aircraft"]
 
-            logger.debug("Readsb webser Online, using it")
+            logger.debug("Readsb webserver Online, using it")
         else:
             logger.debug("using aircraft.json")
             async with aiofiles.open(AIRCRAFT_JSON, 'r') as file:
@@ -120,7 +121,7 @@ class QueryUpdater:
         return filtered_aircrafts
 
     async def update_query(self, first=False):
-        logger.info("Update query in partenza!")
+        logger.info("Starting update query!")
         if first:
             if UNIX:
                 self.reader, self.writer = await asyncio.open_unix_connection(UNIX_SOCKET)
@@ -134,10 +135,10 @@ class QueryUpdater:
                 self.reader, self.writer = await asyncio.open_unix_connection(UNIX_SOCKET)
             while True:
                 await self.real_update_query()
-                await asyncio.sleep(FREQUENZA_AGGIORNAMENTO_AEREI)
+                await asyncio.sleep(AIRCRAFT_UPDATE_FREQUENCY)
 
     async def fetch_data_from_unix(self):
-        #todo da sistemare
+        # todo da sistemare
         await self.writer.drain()
 
         data = await self.reader.read(-1)
@@ -145,11 +146,11 @@ class QueryUpdater:
         return data.decode()
 
     async def update_db(self):
-        logger.info("Estrazione database tar1090...")
+        logger.info("Extracting tar1090's database ...")
 
         await self.get_icao_from_db()
 
-        logger.info("Aerei recuperati!...")
+        logger.info("Aircraft loaded!...")
 
         await download_file(URL_OPEN, DB_OPEN_ZIP)
 
@@ -157,9 +158,9 @@ class QueryUpdater:
         async with aiofiles.open(DB_OPEN, mode='r') as db_file:
             content = await db_file.read()
             reader: csv.DictReader = csv.DictReader(content.splitlines())
-            for riga in reader:
-                icao24 = riga['icao24'].upper()
-                self.database_open[icao24] = DbDizionario(riga)
+            for row in reader:
+                icao24 = row['icao24'].upper()
+                self.database_open[icao24] = DatabaseDict(row)
 
 
-query_updater = QueryUpdater()
+query_updater: QueryUpdater = QueryUpdater()

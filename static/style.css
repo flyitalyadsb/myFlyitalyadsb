@@ -19,7 +19,7 @@
     background-color: green;
 }
 
-.centrale {
+.middle {
     display: flex;
     justify-content: center;
     align-items: center;

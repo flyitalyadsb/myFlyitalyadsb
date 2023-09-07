@@ -25,11 +25,11 @@
 
 
     </script>
-    <title>Report voli</title>
+    <title>Report flights</title>
 </head>
 <body>
 
-<p class="centrale display-1">Report voli</p>
+<p class="middle display-1">Report flights</p>
 <div class="container mt-5">
     <p class="display-5">Filtra</p>
     <form method="post" action="/report" method="POST">
@@ -98,11 +98,11 @@
         <br>
         <br>
         <br>
-        {{ form.submit(class="btn btn-primary", value="Cerca") }}
+        {{ form.submit(class="btn btn-primary", value="Search") }}
     </form>
     <hr>
 
-    {% if voli %}
+    {% if flights %}
         <div class="pagination">
             {% for button in buttons %}
                 {% if button.get('active') %}
@@ -112,47 +112,47 @@
                 {% endif %}
             {% endfor %}
         </div>
-        <div id="report_voli " class="p-3 ">
-            <table class="table-responsive table-bordered">
-                <thead class="thead_center">
+        <div id="flights_report " class="p-3 ">
+            <table class="table-responsive table-bordered table-striped table-hover">
+                <thead class="thead_center thead-dark">
                 <tr>
-                    <th>Registrazione</th>
+                    <th>Registration</th>
                     <th>Icao</th>
-                    <th>Operatore</th>
-                    <th>Modello</th>
-                    <th>Tipo</th>
-                    <th>Civile/Militare</th>
-                    <th>Inizio</th>
-                    <th>Fine</th>
-                    <th>Traccia</th>
+                    <th>Operator</th>
+                    <th>Model</th>
+                    <th>Type</th>
+                    <th>CivMil</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Trace</th>
                     <th>Squawk</th>
                     <th>Editor</th>
 
                 </tr>
                 </thead>
-                <tbody class="p-1">
-                {% for volo in voli %}
+                <tbody class="p-1 table-group-divider">
+                {% for volo in flights %}
                     <tr>
-                        <td>{{ volo["Registration"] if volo["Registration"] is defined else '' }}</td>
+                        <td>{{ volo["registration"] if volo["registration"] is defined else '' }}</td>
                         <td>{{ volo["icao"] if volo["icao"] is defined else '' }}</td>
-                        <td>{{ volo["Operator"] if volo["Operator"] is defined else '' }}</td>
-                        <td>{{ volo["Type"] if volo["Type"] is defined else '' }}</td>
-                        <td>{{ volo["ICAOTypeCode"] if volo["ICAOTypeCode"] is defined else '' }}</td>
-                        {% if volo["CivMil"] %}
-                            <td>Militare</td>
-                        {% elif volo["CivMil"] is not defined %}
+                        <td>{{ volo["operator"] if volo["operator"] is defined else '' }}</td>
+                        <td>{{ volo["type"] if volo["type"] is defined else '' }}</td>
+                        <td>{{ volo["icao_type_code"] if volo["icao_type_code"] is defined else '' }}</td>
+                        {% if volo["civ_mil"] %}
+                            <td>Military</td>
+                        {% elif volo["civ_mil"] is not defined %}
                             <td></td>
                         {% else %}
-                            <td>Civile</td>
+                            <td>Civil</td>
                         {% endif %}
-                        <td>{{ volo["inizio"].strftime('%Y-%m-%d %H:%M:%S') if volo["inizio"] is defined else '' }}</td>
-                        <td>{{ volo["fine"].strftime('%Y-%m-%d %H:%M:%S') if volo["fine"] is defined else '' }}</td>
+                        <td>{{ volo["start"].strftime('%Y-%m-%d %H:%M:%S') if volo["start"] is defined else '' }}</td>
+                        <td>{{ volo["end"].strftime('%Y-%m-%d %H:%M:%S') if volo["end"] is defined else '' }}</td>
                         <td>
                             <a href="https://mappa.flyitalyadsb.com?icao={{ volo['icao'].lower() }}&showTrace={{ volo.inizio.strftime('%Y-%m-%d') }}"
                                class="btn btn-sm btn-outline-secondary">Report</a></td>
                         <td>{{ volo["squawk"] if volo["squawk"] is defined else '' }}</td>
-                        <td><a href={{ "https://listavoli.flyitalyadsb.com/editor?icao=" + volo['icao'] }}>Modifica
-                            Informazioni</a></td>
+                        <td><a href={{ "https://listaflights.flyitalyadsb.com/editor?icao=" + volo['icao'] }}>Edit info
+                            </a></td>
 
                     </tr>
 
@@ -184,7 +184,7 @@
             var xhttp = new XMLHttpRequest();
             xhttp.onreadystatechange = function () {
                 if (this.readyState === 4 && this.status === 200) {
-                    document.getElementById("report_voli").innerHTML = this.responseText;
+                    document.getElementById("report_flights").innerHTML = this.responseText;
                 }
             }
             xhttp.open("GET", "/report_table?page=" + pageNumber, true);

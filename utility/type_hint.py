@@ -1,35 +1,34 @@
 from typing import Union, List, Optional, Any
-from pydantic import BaseModel
 
 
-class DbDizionario:  # database opensky
-    def __init__(self, riga):
-        self.registration = riga['registration']
-        self.manufacturericao = riga['manufacturericao']
-        self.manufacturername = riga['manufacturername']
-        self.model = riga['model']
-        self.typecode = riga['typecode']
-        self.serialnumber = riga['serialnumber']
-        self.linenumber = riga['linenumber']
-        self.icaoaircrafttype = riga['icaoaircrafttype']
-        self.operator = riga['operator']
-        self.operatorcallsign = riga['operatorcallsign']
-        self.operatoricao = riga['operatoricao']
-        self.operatoriata = riga['operatoriata']
-        self.owner = riga['owner']
-        self.testreg = riga['testreg']
-        self.registered = riga['registered']
-        self.reguntil = riga['reguntil']
-        self.status = riga['status']
-        self.built = riga['built']
-        self.firstflightdate = riga['firstflightdate']
-        self.seatconfiguration = riga['seatconfiguration']
-        self.engines = riga['engines']
-        self.modes = riga['modes']
-        self.adsb = riga['adsb']
-        self.acars = riga['acars']
-        self.notes = riga['notes']
-        self.categoryDescription = riga['categoryDescription']
+class DatabaseDict:  # database opensky
+    def __init__(self, row):
+        self.registration = row['registration']
+        self.manufacturericao = row['manufacturericao']
+        self.manufacturername = row['manufacturername']
+        self.model = row['model']
+        self.typecode = row['typecode']
+        self.serialnumber = row['serialnumber']
+        self.linenumber = row['linenumber']
+        self.icaoaircrafttype = row['icaoaircrafttype']
+        self.operator = row['operator']
+        self.operatorcallsign = row['operatorcallsign']
+        self.operatoricao = row['operatoricao']
+        self.operatoriata = row['operatoriata']
+        self.owner = row['owner']
+        self.testreg = row['testreg']
+        self.registered = row['registered']
+        self.reguntil = row['reguntil']
+        self.status = row['status']
+        self.built = row['built']
+        self.firstflightdate = row['firstflightdate']
+        self.seatconfiguration = row['seatconfiguration']
+        self.engines = row['engines']
+        self.modes = row['modes']
+        self.adsb = row['adsb']
+        self.acars = row['acars']
+        self.notes = row['notes']
+        self.categoryDescription = row['categoryDescription']
 
 
 class AircraftDataRaw(dict):  # aircraft di aircrafts.json

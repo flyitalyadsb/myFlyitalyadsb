@@ -13,34 +13,34 @@
       crossorigin=""/>
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 
-<p id="benvenuto" class="display-1 p-3">Aerei in arrivo....</p>
+<p id="welcome" class="display-1 p-3">Loading aircraft...</p>
 <br>
 
 <div id="menu" class="container-fluid d-none justify-content-center align-items-center">
     <div class="row ">
         <div class="col-md-auto text-center">
             <form method="post">
-                {{ form.Sito(class="btn btn-light btn-block") }}
+                {{ form.site(class="btn btn-light btn-block") }}
             </form>
         </div>
         <div class="col-md-auto text-center">
             <form method="post">
-                {{ form.Mappa_my(class="btn btn-light btn-block") }}
+                {{ form.my_map(class="btn btn-light btn-block") }}
             </form>
         </div>
         <div class="col-md-auto text-center">
             <form method="post">
-                {{ form.Report(class="btn btn-light btn-block") }}
+                {{ form.report(class="btn btn-light btn-block") }}
             </form>
         </div>
         <div class="col-md-auto text-center">
             <form method="post">
-                {{ form.Mappa(class="btn btn-light btn-block") }}
+                {{ form.map(class="btn btn-light btn-block") }}
             </form>
         </div>
         <div class="col-md-auto text-center">
             <form method="post">
-                {{ form.Grafici(class="btn btn-light btn-block") }}
+                {{ form.graphs(class="btn btn-light btn-block") }}
             </form>
         </div>
     </div>
@@ -55,7 +55,7 @@
 <br>
 <div class="row">
     <div class="col">
-        <div id="mappa_canvas"></div>
+        <div id="canvas_map"></div>
     </div>
 </div>
 <div class="row mt-5 mb-0">
@@ -65,7 +65,7 @@
             <div class="d-flex align-items-center">
                 <label class="form-label">
                     <input type="text" class="form-control" name="search"
-                           value="{{ request.query_params.get('search', '') }}" placeholder="Cerca...">
+                           value="{{ request.query_params.get('search', '') }}" placeholder="Search...">
 
                 </label>
                 <label class="form-label">
@@ -73,8 +73,8 @@
                         <option value="hex"
                                 {% if request.query_params.get('sort_by', '') == 'hex' %}selected{% endif %}>ICAO
                         </option>
-                        <option value="Registrazione"
-                                {% if request.query_params.get('sort_by', '') == 'Registrazione' %}selected{% endif %}>
+                        <option value="registration"
+                                {% if request.query_params.get('sort_by', '') == 'registration' %}selected{% endif %}>
                             Registrazione
                         </option>
                         <option value="flight"
@@ -85,8 +85,8 @@
                                 {% if request.query_params.get('sort_by', '') == 'squawk' %}selected{% endif %}>
                             Squawk
                         </option>
-                        <option value="Operatore"
-                                {% if request.query_params.get('sort_by', '') == 'Operatore' %}selected{% endif %}>
+                        <option value="operator"
+                                {% if request.query_params.get('sort_by', '') == 'operator' %}selected{% endif %}>
                             Operatore
                         </option>
                     </select>
@@ -101,16 +101,16 @@
     <div class="col-md-auto text-center">
 
         <form id="slider_form" method="post" class=" form p-3 d-none">
-            <label for="raggio">{{ posizione.raggio.label.text }}</label>
+            <label for="radius">{{ position.radius.label.text }}</label>
             <div class="d-flex align-items-center">
-                {{ posizione.raggio(class="form-range", id="raggio", type="range", min="0", max="500", oninput='outputUpdate(value)', value= request.state.session.raggio |default(250)) }}
+                {{ position.radius(class="form-range", id="radius", type="range", min="0", max="500", oninput='outputUpdate(value)', value= request.state.session.radius |default(250)) }}
                 <button type="submit" class="paper-plane-button ms-2"><i class="fas fa-paper-plane"></i></button>
-                <button type="button" id="clear_posizione" class="x-button ms-2" style="display:none;"><i
+                <button type="button" id="clear_position" class="x-button ms-2" style="display:none;"><i
                         class="fa-regular fa-circle-xmark"></i></button>
 
             </div>
-            <output for="raggio" id="selected-raggio">
-                {% if  request.state.session.raggio %}{{ request.state.session.raggio }} {% else %}
+            <output for="radius" id="selected-radius">
+                {% if  request.state.session.radius %}{{ request.state.session.radius }} {% else %}
                     250 {% endif %}</output>
         </form>
     </div>
@@ -118,7 +118,7 @@
     <div class="col-md-auto text-center">
 
         <form id="mio" method="post" class=" form p-3 d-none">
-            <label for="raggio">{{ mio.only_mine.label.text }}</label>
+            <label for="radius">{{ mio.only_mine.label.text }}</label>
             <div class="d-flex align-items-center">
                 {{ mio.only_mine(class="form-select") }}
                 <button type="submit" class="paper-plane-button ms-2"><i class="fas fa-paper-plane"></i></button>
@@ -131,7 +131,7 @@
 
 </div>
 
-<div id="report_voli" class="table-responsive pt-0 px-3 m-0"></div>
+<div id="flights_report" class="table-responsive pt-0 px-3 m-0"></div>
 
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -142,28 +142,26 @@
     let currentPage = 1
     let sort = false
     let only_mine = false
-    let posizione = false
+    let position = false
 
-    let mappa = L.map('mappa_canvas').setView([stazioneCentrale.lat, stazioneCentrale.lon], 7);
+    let map = L.map('canvas_map').setView([my_receiver.lat, my_receiver.lon], 7);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(mappa);
+    }).addTo(map);
 
-    // Aggiungi la stazione centrale
-    L.marker([stazioneCentrale.lat, stazioneCentrale.lon]).addTo(mappa)
-        .bindPopup(stazioneCentrale.nome)
+    L.marker([my_receiver.lat, my_receiver.lon]).addTo(map)
+        .bindPopup(my_receiver.nome)
         .openPopup();
 
-    // Aggiungi le stazioni collegate e disegna una linea per collegarle alla stazione centrale
-    stazioniCollegate.forEach(stazione => {
-        L.marker([stazione.lat, stazione.lon]).addTo(mappa)
-            .bindPopup(stazione.nome);
+    synced_receivers.forEach(synced_receiver => {
+        L.marker([synced_receiver.lat, synced_receiver.lon]).addTo(map)
+            .bindPopup(synced_receiver.nome);
 
         L.polyline([
-            [stazioneCentrale.lat, stazioneCentrale.lon],
-            [stazione.lat, stazione.lon]
-        ]).addTo(mappa);
+            [my_receiver.lat, my_receiver.lon],
+            [synced_receiver.lat, synced_receiver.lon]
+        ]).addTo(map);
     });
 
     function get_parameters() {
@@ -181,8 +179,8 @@
         if (only_mine !== false) {
             params.push("only_mine=" + only_mine);
         }
-        if (posizione !== false) {
-            params.push("posizione=" + posizione);
+        if (position !== false) {
+            params.push("position=" + position);
         }
         return params.join('&')
 
@@ -193,15 +191,15 @@
         var xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
             if (this.readyState === 4 && this.status === 200) {
-                document.getElementById("benvenuto").innerHTML = "My Fly Italy Adsb - {{ ricevitore.name if ricevitore.name else ricevitore.uuid}}";
-                document.getElementById("benvenuto").classList.add("centrale");
+                document.getElementById("welcome").innerHTML = "My Fly Italy Adsb - {{ receiver.name if receiver.name else receiver.uuid}}";
+                document.getElementById("welcome").classList.add("middle");
                 document.getElementById("menu").classList.remove("d-none");
                 var elements = document.querySelectorAll('.d-none');
                 elements.forEach(function (element) {
                     element.classList.remove('d-none');
                 });
                 document.getElementById("menu").classList.add("d-flex");
-                document.getElementById("report_voli").innerHTML = this.responseText;
+                document.getElementById("flights_report").innerHTML = this.responseText;
             }
         }
         xhttp.open("GET", "/table?" + queryString, true);
@@ -235,28 +233,19 @@
         $("#slider_form").submit(function (event) {
             event.preventDefault();
             currentPage = 1
-            posizione = $(this).find('input[name="raggio"]').val();
+            position = $(this).find('input[name="radius"]').val();
             real_update();
-            $("#clear_posizione").show();
+            $("#clear_position").show();
         });
     });
     $(document).ready(function () {
         $("#mio").submit(function (event) {
             event.preventDefault();
             only_mine = $(this).find('select[name="only_mine"]').val();
-            if (only_mine === "quelli di tutti") {
+            if (only_mine === "{{ mio.only_mine.choices[1] }}") {
                 only_mine = false
-                $.ajax({
-                    url: '/disattiva/only_mine',
-                    type: 'POST',
-                    success: function (response) {
-                        $("#clear_mio").hide()
-                        real_update()
-                    },
-                    error: function (jqXHR, textStatus, errorThrown) {
-                        console.log('Errore nella richiesta AJAX:', textStatus, errorThrown);
-                    }
-                });
+                $("#clear_mio").hide()
+                real_update()
                 real_update()
             } else {
                 $('#clear_mio').show();
@@ -271,57 +260,30 @@
             event.preventDefault();
             filter = false
             sort = false
-            $.ajax({
-                url: '/disattiva/search',
-                type: 'POST',
-                success: function (response) {
-                    $("#clear_search").hide()
-                    real_update()
-                },
-                error: function (jqXHR, textStatus, errorThrown) {
-                    console.log('Errore nella richiesta AJAX:', textStatus, errorThrown);
-                }
-            });
+            $("#clear_search").hide()
+            real_update()
         });
     });
     $(document).ready(function () {
-        $("#clear_posizione").click(function (event) {
+        $("#clear_position").click(function (event) {
             event.preventDefault();
-            posizione = false
-            $.ajax({
-                url: '/disattiva/posizione',
-                type: 'POST',
-                success: function (response) {
-                    $("#clear_posizione").hide()
-                    real_update()
-
-                },
-                error: function (jqXHR, textStatus, errorThrown) {
-                    console.log('Errore nella richiesta AJAX:', textStatus, errorThrown);
-                }
-            });
+            position = false
+            real_update()
+            $("#clear_position").hide()
         });
     });
     $(document).ready(function () {
         $("#clear_mio").click(function (event) {
             event.preventDefault();
             only_mine = false
-            $.ajax({
-                url: '/disattiva/only_mine',
-                type: 'POST',
-                success: function (response) {
-                    $("#clear_mio").hide()
-                    real_update()
-                },
-                error: function (jqXHR, textStatus, errorThrown) {
-                    console.log('Errore nella richiesta AJAX:', textStatus, errorThrown);
-                }
-            });
+            real_update()
+            $("#clear_mio").hide()
+
         });
     });
 
     function outputUpdate(value) {
-        document.getElementById('selected-raggio').textContent = value;
+        document.getElementById('selected-radius').textContent = value;
     }
 
     setInterval(real_update, 5000)
