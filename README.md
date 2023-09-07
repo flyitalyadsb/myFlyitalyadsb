@@ -2,7 +2,7 @@
 
 myFlyItalyAdsb is a lightweight web application designed to allow each user to visualize real-time flight data from their individual receiver. It integrates directly with `readsb`, `mlat-server` and provides a real-time flight table similar to VRS. Moreover, it offers comprehensive reporting features and the flexibility to modify aircraft details.
 
-![Screenshot of the application](index_screenshot.png)
+![index screenshot](index_screenshot.png)
 
 ## Features 🌟
 
@@ -27,7 +27,7 @@ Access is straightforward:
 
 ## Installation ⚙️
 
-_(You can add your specific installation steps here.)_
+_in progress..._
 
 ## Contribution ✨
 
