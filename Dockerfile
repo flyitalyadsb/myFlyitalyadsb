@@ -1,9 +1,8 @@
-FROM python:latest
-ENV PYTHONUNBUFFERED 1
-WORKDIR /
+FROM python:3.11-slim
+WORKDIR /app
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-EXPOSE 830
-
-CMD ["python", "main.py"]
+RUN apt-get update && \
+    pip install --no-cache-dir -r requirements.txt && \
+    rm -rf /var/lib/apt/lists/*
+COPY . .
+ENTRYPOINT ["python", "main.py"]
