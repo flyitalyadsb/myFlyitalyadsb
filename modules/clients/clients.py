@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from tqdm import tqdm
 
-from utility.config import RECEIVERS_JSON, CLIENTS_MLAT_JSON, CLIENTS_JSON, SYNC_JSON
+from utility.config import config
 from utility.model import Receiver
 
 logger = logging.getLogger(__name__)
@@ -18,9 +18,9 @@ async def read_file(filename):
         data = await file.read()
 
         parsed_data = ujson.loads(data)
-        if filename == RECEIVERS_JSON:
+        if filename == config.receiver_json:
             return parsed_data["receivers"]
-        elif filename == CLIENTS_JSON:
+        elif filename == config.clients_json:
             return parsed_data["clients"]
         else:
             return parsed_data
@@ -28,10 +28,10 @@ async def read_file(filename):
 
 async def clients(session):
     receivers_readsb, clients_readsb, clients_mlat, sync_mlat = await asyncio.gather(
-        read_file(RECEIVERS_JSON),
-        read_file(CLIENTS_JSON),
-        read_file(CLIENTS_MLAT_JSON),
-        read_file(SYNC_JSON)
+        read_file(config.receiver_json),
+        read_file(config.clients_json),
+        read_file(config.clients_mlat_json),
+        read_file(config.sync_json)
     )
 
     # Get existing receivers from database

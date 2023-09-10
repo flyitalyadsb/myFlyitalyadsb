@@ -1,0 +1,13 @@
+services:
+  myFlyitalyadsb:
+    image: myflyitalyadsb
+    container_name: myFlyitalyadsb
+    restart: unless-stopped
+    #volumes:
+    #  - ${READSB_DATA_PATH}/json/ingest:/json
+    ports:
+     - "830:830"
+     - "83:83"
+    entrypoint: /usr/local/bin/python main.py
+    command:
+      - --server-listen "0.0.0.0:830"

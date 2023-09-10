@@ -1,42 +1,58 @@
 import platform
+from argparse import Namespace
+from parser import get_args
 
-debug = False
 
-HOST = "0.0.0.0"
-PORT = 83
-DEPLOYEMENT_HOST = "localhost"
-DEPLOYEMENT_PORT = 830
+class Config:
+    def __init__(self, args: Namespace) -> None:
 
-# path
-AIRCRAFT_JSON = "/json/aircraft.json"
-RECEIVERS_JSON = "/json/ingest/receivers.json"
-CLIENTS_JSON = "/json/ingest/clients.json"
+        # server_main
+        self.host: str = args.server_listen.split(":")[0]
+        self.port: int = args.server_listen.split(":")[1]
+        self.debug: bool = args.debug
+        self.deployment: bool = args.deployment
+        self.deployment_host: str = args.deployment_host
+        self.deployment_port: int = args.deployment_port
 
-SYNC_JSON = "/mlat/sync.json"
-CLIENTS_MLAT_JSON = "/mlat/clients.json"
-DB_OPEN_DIR = "../dati/"
-DB_OPEN_ZIP = "/dati/open.zip"
-TIMEOUT = 3
+        # readsb_input
+        self.aircraft_json: str = args.aircraft_json
+        self.receiver_json: str = args.receiver_json
+        self.clients_json: str = args.clients_json
+        self.url_readsb: str = args.url_readsb
 
-if platform.system() == "Windows":
-    AIRCRAFT_JSON = "./windows/json/aircraft.json"
-    RECEIVERS_JSON = "./windows/json/ingest/receivers.json"
-    CLIENTS_JSON = "./windows/json/ingest/clients.json"
-    SYNC_JSON = "./windows/mlat/sync.json"
-    CLIENTS_MLAT_JSON = "./windows/mlat/clients.json"
-    DB_OPEN_ZIP = "./windows/dati/open.zip"
-    DB_OPEN_DIR = "../windows/dati/"
-    TIMEOUT = 10
+        # mlat_server_input
+        self.sync_json: str = args.sync_json
+        self.clients_mlat_json: str = args.clients_mlat_json
 
-URL_OPEN = "https://opensky-network.org/datasets/metadata/aircraftDatabase.zip"
-DB_OPEN = DB_OPEN_DIR + "media/data/samples/metadata/aircraftDatabase.csv"
+        # database_input
+        self.url_open: str = args.url_onbline_db
+        self.timeout: int | float = args.db_request_timeout
 
-URL_READSB = "https://mappa.flyitalyadsb.com/re-api/?all"
+        self.db_open_dir = args.db_open_dir
+        self.db_open_zip = self.db_open_dir + "/open.zip"
 
-PER_PAGE = 50
-UNIX = False
-UNIX_SOCKET = "unix:/run/readsb/api.sock"
+        self.db_open = self.db_open_dir + "media/data/samples/metadata/aircraftDatabase.csv"
 
-UPDATE_TOTAL = 0.5
-AIRCRAFT_UPDATE_FREQUENCY = 0.2
-UPDATE = 25
+        # unix
+        self.unix: bool = args.unix
+        self.unix_socket = args.unix_socket
+
+        # web
+        self.per_page: int = args.per_page
+
+        self.aircraft_update = args.aircraft_update
+        self.clients_and_db_update: int | float = args.clients_and_db_update  # time to wait until next sync_clients_and_db
+
+        if self.deployment:
+            self.aircraft_json = "./windows/json/aircraft.json"
+            self.receiver_json = "./windows/json/ingest/receivers.json"
+            self.clients_json = "./windows/json/ingest/clients.json"
+            self.sync_json = "./windows/mlat/sync.json"
+            self.clients_mlat_json = "./windows/mlat/clients.json"
+            self.db_open_zip = "./windows/dati/open.zip"
+            self.db_open_dir = "../windows/dati/"
+            self.timeout = 10
+
+
+args_gotten = get_args()
+config: Config = Config(args_gotten)

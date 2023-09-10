@@ -6,7 +6,7 @@ fastapi==0.103.1
 Flask==2.3.2
 pydantic==2.3.0
 SQLAlchemy==2.0.19
-starlette==0.31.1
+starlette==0.27.0
 Starlette_WTF==0.4.3
 tqdm==4.65.2
 ujson==5.8.0

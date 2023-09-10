@@ -14,8 +14,7 @@ from cachetools import LRUCache
 from fastapi import Request
 from sqlalchemy.future import select
 
-from utility.config import TIMEOUT, AIRCRAFT_JSON, URL_OPEN, DB_OPEN_DIR, DB_OPEN_ZIP, DB_OPEN, URL_READSB, UNIX_SOCKET, \
-    UNIX, AIRCRAFT_UPDATE_FREQUENCY
+from utility.config import config
 from utility.model import Aircraft, Receiver, SessionLocal, SessionData
 from utility.type_hint import AircraftDataRaw, DatabaseDict, AircraftsJson
 
@@ -26,7 +25,7 @@ logger = logging.getLogger("common")
 
 def unzip_data(data):
     with BytesIO(data) as bio, zipfile.ZipFile(bio) as zip_file:
-        zip_file.extractall(DB_OPEN_DIR)
+        zip_file.extractall(config.db_open_dir)
 
 
 def flash(request: Request, message: Any) -> None:
@@ -42,7 +41,7 @@ def get_flashed_message(request: Request):
 
 
 async def unzip_db():
-    async with aiofiles.open(DB_OPEN_ZIP, 'rb') as file:
+    async with aiofiles.open(config.db_open_zip, 'rb') as file:
         data = await file.read()
     await asyncio.to_thread(unzip_data, data)
 
@@ -58,7 +57,7 @@ async def download_file(url: str, destination: str) -> None:
 
 
 async def fetch_data_from_url(logger: logging.Logger, url: str, session) -> dict:
-    async with session.get(url, timeout=TIMEOUT) as response:
+    async with session.get(url, timeout=config.timeout) as response:
         if response.status == 200:
             return await response.json()
         else:
@@ -85,11 +84,11 @@ class QueryUpdater:
         self.icao_in_database = icao_list
 
     async def real_update_query(self):
-        if UNIX:
+        if config.unix:
             data = ujson.loads(await self.fetch_data_from_unix())
         else:
             async with aiohttp.ClientSession() as session:
-                data = await fetch_data_from_url(logger, URL_READSB, session)
+                data = await fetch_data_from_url(logger, config.url_readsb, session)
 
         if data:
             logger.debug("using readsb")
@@ -100,7 +99,7 @@ class QueryUpdater:
             logger.debug("Readsb webserver Online, using it")
         else:
             logger.debug("using aircraft.json")
-            async with aiofiles.open(AIRCRAFT_JSON, 'r') as file:
+            async with aiofiles.open(config.aircraft_json, 'r') as file:
                 content = await file.read()
                 self.data = ujson.loads(content)
                 self.aircraft = deepcopy(self.data["aircraft"])
@@ -123,22 +122,22 @@ class QueryUpdater:
     async def update_query(self, first=False):
         logger.info("Starting update query!")
         if first:
-            if UNIX:
-                self.reader, self.writer = await asyncio.open_unix_connection(UNIX_SOCKET)
+            if config.unix:
+                self.reader, self.writer = await asyncio.open_unix_connection(config.unix_socket)
             await self.real_update_query()
-            if UNIX:
+            if config.unix:
                 self.writer.close()
                 await self.writer.wait_closed()
             return
         else:
-            if UNIX:
-                self.reader, self.writer = await asyncio.open_unix_connection(UNIX_SOCKET)
+            if config.unix:
+                self.reader, self.writer = await asyncio.open_unix_connection(config.unix_socket)
             while True:
                 await self.real_update_query()
-                await asyncio.sleep(AIRCRAFT_UPDATE_FREQUENCY)
+                await asyncio.sleep(config.aircraft_update)
 
     async def fetch_data_from_unix(self):
-        # todo da sistemare
+        #todo
         await self.writer.drain()
 
         data = await self.reader.read(-1)
@@ -152,10 +151,10 @@ class QueryUpdater:
 
         logger.info("Aircraft loaded!...")
 
-        await download_file(URL_OPEN, DB_OPEN_ZIP)
+        await download_file(config.url_open, config.db_open_zip)
 
         await unzip_db()
-        async with aiofiles.open(DB_OPEN, mode='r') as db_file:
+        async with aiofiles.open(config.db_open, mode='r') as db_file:
             content = await db_file.read()
             reader: csv.DictReader = csv.DictReader(content.splitlines())
             for row in reader:
@@ -164,3 +163,7 @@ class QueryUpdater:
 
 
 query_updater: QueryUpdater = QueryUpdater()
+
+
+def print_result(result):
+    print(result)
