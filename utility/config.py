@@ -9,10 +9,6 @@ class Config:
         if args.server_listen[1]:
             self.port: int = int(args.server_listen[1])
         self.debug: bool = args.debug
-        self.deployment: bool = args.deployment
-        self.deployment_host: str = args.deployment_host
-        if args.deployment_port:
-            self.deployment_port: int = int(args.deployment_port)
 
         # readsb_input
         self.aircraft_json: str = args.aircraft_json
@@ -25,8 +21,11 @@ class Config:
         self.clients_mlat_json: str = args.clients_mlat_json
 
         # online_database_input
-        self.db_open_dir = args.online_db_path
-
+        self.db_open_dir: str = args.online_db_path
+        if not self.db_open_dir.endswith("/"):
+            self.db_open_dir = self.db_open_dir + "/"
+        self.db_open_zip = self.db_open_dir + "open.zip"
+        self.db_open = self.db_open_dir + "media/data/samples/metadata/aircraftDatabase.csv"
         self.url_open: str = args.url_online_db
         self.timeout: int | float = args.db_request_timeout
 
@@ -43,18 +42,7 @@ class Config:
         self.aircraft_update = args.aircraft_update
         self.clients_and_db_update: int | float = args.clients_and_db_update  # time to wait until next sync_clients_and_db
 
-        if self.deployment:
-            self.aircraft_json = "/deployment/json/aircraft.json"
-            self.receiver_json = "/deployment/json/ingest/receivers.json"
-            self.clients_json = "/deployment/json/ingest/clients.json"
-            self.sync_json = "/deployment/mlat/sync.json"
-            self.clients_mlat_json = "/deployment/mlat/clients.json"
-            self.db_open_zip = "/deployment/dati/open.zip"
-            self.db_open_dir = "/deployment/dati/"
-            self.timeout = 10
 
-        self.db_open_zip = self.db_open_dir + "open.zip"
-        self.db_open = self.db_open_dir + "media/data/samples/metadata/aircraftDatabase.csv"
 
 
 args_gotten = get_args()

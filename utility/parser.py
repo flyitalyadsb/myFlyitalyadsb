@@ -23,19 +23,6 @@ def server_main(parser):
                         action='store_true',
                         default=False
                         )
-    parser.add_argument('--deployment',
-                        help="enter in deployment mode",
-                        action='store_true',
-                        default=False
-                        )
-    parser.add_argument('--deployment-host',
-                        help="This argument is required when --debug is used",
-                        default=None
-                        )
-    parser.add_argument('--deployment-port',
-                        help="This argument is required when --debug is used",
-                        default=None
-                        )
 
 
 def readsb_input(parser):
@@ -52,7 +39,8 @@ def readsb_input(parser):
                         default="/json/ingest/clients.json")
 
     parser.add_argument('--url-readsb',
-                        help="write results in CSV format to a local file.",
+                        help="Url to readsb. example: readsb:30152 if you have your readsb with --net-tar1090-api 20152 "
+                             "in a docker container named readsb",
                         default="https://mappa.flyitalyadsb.com/re-api/?all")
 
 
@@ -127,6 +115,4 @@ def get_parser():
 def get_args():
     parser = get_parser()
     args = parser.parse_args()
-    if args.debug and not (args.deployment_host and args.deployment_port):
-        parser.error("--deployment-port and --deployment-host are required when --debug is enabled")
     return args

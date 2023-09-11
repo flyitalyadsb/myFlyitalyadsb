@@ -56,7 +56,7 @@ async def download_file(url: str, destination: str) -> None:
                 raise Exception(f"Unable to download the file. Status: {response.status}")
 
 
-async def fetch_data_from_url(logger: logging.Logger, url: str, session) -> dict:
+async def fetch_data_from_url(url: str, session) -> dict:
     async with session.get(url, timeout=config.timeout) as response:
         if response.status == 200:
             return await response.json()
@@ -88,7 +88,7 @@ class QueryUpdater:
             data = ujson.loads(await self.fetch_data_from_unix())
         else:
             async with aiohttp.ClientSession() as session:
-                data = await fetch_data_from_url(logger, config.url_readsb, session)
+                data = await fetch_data_from_url(config.url_readsb, session)
 
         if data:
             logger.debug("using readsb")

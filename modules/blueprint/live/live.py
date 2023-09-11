@@ -32,7 +32,7 @@ async def index(request: Request):
     mine = await OnlyMine.from_formdata(request)
     if await form.validate_on_submit():
         if form.my_map.data:
-            return RedirectResponse("/mappa", status_code=status.HTTP_303_SEE_OTHER)
+            return RedirectResponse("/map", status_code=status.HTTP_303_SEE_OTHER)
         elif form.map.data:
             return RedirectResponse("https://mappa.flyitalyadsb.com", status_code=status.HTTP_303_SEE_OTHER)
         elif form.report.data:

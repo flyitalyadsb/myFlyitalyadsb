@@ -11,7 +11,7 @@ from utility.model import Receiver
 
 mappa_bp = APIRouter(prefix="/map")
 mappa_bp.logger = logging.getLogger(__name__)
-path = "modules/blueprint/mappa_personale/templates"
+path = "modules/blueprint/my_map/templates"
 templates = Jinja2Templates(directory=path)
 
 
