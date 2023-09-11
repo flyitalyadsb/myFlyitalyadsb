@@ -111,7 +111,7 @@ async def run():
 
     await setup_database()
 
-    if config.clients_and_db_update:
+    if config.debug:
         asyncio.get_event_loop().set_debug(True)
         await asyncio.gather(query_updater.update_query(True), query_updater.update_db())
         await sync_clients_and_db()

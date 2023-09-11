@@ -1,6 +1,6 @@
 services:
-  myFlyitalyadsb:
-    image: myflyitalyadsb
+  myflyitalyadsb:
+    build: ./
     container_name: myFlyitalyadsb
     restart: unless-stopped
     #volumes:
@@ -10,4 +10,12 @@ services:
      - "83:83"
     entrypoint: /usr/local/bin/python main.py
     command:
-      - --server-listen "0.0.0.0:830"
+      - --server-listen
+      - "0.0.0.0:830"
+      - --deployment
+      - --deployment-host
+      - "0.0.0.0"
+      - --deployment-port
+      - "830"
+    volumes:
+      - ./deployment:/deployment

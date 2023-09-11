@@ -90,7 +90,7 @@ async def get_info_or_add_aircraft_total(sliced_aircrafts=None):
     else:
         aircrafts = query_updater.aircraft
     if not query_updater.aircraft_to_be_served[2] and time.time() - query_updater.aircraft_to_be_served[
-        0] > config.update_total:
+        0] > config.aircraft_update:
         query_updater.aircraft_to_be_served[2] = True
         for aircraft in tqdm(aircrafts, desc="Obtaining each aircraft's INFO"):
             icao: str = aircraft["hex"]
