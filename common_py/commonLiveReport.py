@@ -8,7 +8,7 @@ from tqdm import tqdm
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from common_py.common import query_updater, aircraft_cache
-from utility.config import PER_PAGE, UPDATE_TOTAL
+from utility.config import config
 from utility.model import Aircraft, SessionLocal
 from utility.type_hint import DatabaseDict
 
@@ -45,14 +45,14 @@ async def pagination_func(
     total = len(aircrafts_func)
     logger.debug(f" len aircrafts passed to pagination_func: {len(aircrafts_func)} ")
     if page != 0:
-        start = (page - 1) * PER_PAGE
+        start = (page - 1) * config.per_page
     else:
         start = 0
-    end = start + PER_PAGE
+    end = start + config.per_page
     sliced_aircrafts = aircrafts_func[start:end]
     if live:
         sliced_aircrafts = await get_info_or_add_aircraft_total(sliced_aircrafts)
-    pagination = paginate(page=page, total=total, per_page=PER_PAGE)
+    pagination = paginate(page=page, total=total, per_page=config.per_page)
     return sliced_aircrafts, pagination
 
 
@@ -90,7 +90,7 @@ async def get_info_or_add_aircraft_total(sliced_aircrafts=None):
     else:
         aircrafts = query_updater.aircraft
     if not query_updater.aircraft_to_be_served[2] and time.time() - query_updater.aircraft_to_be_served[
-        0] > UPDATE_TOTAL:
+        0] > config.aircraft_update:
         query_updater.aircraft_to_be_served[2] = True
         for aircraft in tqdm(aircrafts, desc="Obtaining each aircraft's INFO"):
             icao: str = aircraft["hex"]
