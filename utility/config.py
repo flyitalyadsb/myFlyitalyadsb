@@ -6,11 +6,13 @@ class Config:
     def __init__(self, args: Namespace) -> None:
         # server_main
         self.host: str = args.server_listen[0]
-        self.port: int = int(args.server_listen[1])
+        if args.server_listen[1]:
+            self.port: int = int(args.server_listen[1])
         self.debug: bool = args.debug
         self.deployment: bool = args.deployment
         self.deployment_host: str = args.deployment_host
-        self.deployment_port: int = int(args.deployment_port)
+        if args.deployment_port:
+            self.deployment_port: int = int(args.deployment_port)
 
         # readsb_input
         self.aircraft_json: str = args.aircraft_json
