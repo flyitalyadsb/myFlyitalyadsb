@@ -85,10 +85,7 @@ async def middleware(request: Request, call_next):
 def fastapi_start():
     app.logger = logging.getLogger("Fastapi")
     app.logger.info("Starting Fastapi!")
-    if platform.system() != "Windows":
-        uvicorn.run(app, host=config.deployment_host, port=config.deployment_port)
-    else:
-        uvicorn.run(app, host=config.host, port=config.port)
+    uvicorn.run(app, host=config.host, port=config.port)
 
 
 result = ""
