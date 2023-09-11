@@ -69,7 +69,7 @@ def mlat_server_input(parser):
 def online_database_input(parser):
     parser.add_argument('--online-db-path',
                         help="write results in CSV format to a local file.",
-                        default="/dati")
+                        default="/dati/")
     parser.add_argument('--url-online-db',
                         help="write results in CSV format to a local file.",
                         default="https://opensky-network.org/datasets/metadata/aircraftDatabase.zip")
