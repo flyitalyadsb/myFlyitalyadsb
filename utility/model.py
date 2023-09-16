@@ -19,9 +19,9 @@ class Aircraft(Base):
     icao_type_code = Column(String(20))
     type = Column(String(100))
     civ_mil = Column(Boolean)
-    operator = Column(String(80))
-    serial_number = Column(String(80))
-    operator_icao = Column(String(80))
+    operator = Column(String(160))
+    serial_number = Column(String(160))
+    operator_icao = Column(String(160))
 
     def repr(self):
         repr = AircraftRep(self.id, self.icao, self.registration, self.icao_type_code, self.type, self.civ_mil,
@@ -126,7 +126,7 @@ class SessionData(Base):
     session_uuid = Column(Uuid)
     message = Column(String)
     report = Column(JSON)
-    uuid = Column(Integer, ForeignKey('receiver.uuid'))
+    uuid = Column(String, ForeignKey('receiver.uuid'))
     logged_in = Column(Boolean)
     position = Column(Boolean)
     radius = Column(Integer)

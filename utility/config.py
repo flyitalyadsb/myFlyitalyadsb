@@ -15,6 +15,7 @@ class Config:
         self.receiver_json: str = args.receivers_json
         self.clients_json: str = args.clients_json
         self.url_readsb: str = args.url_readsb
+        self.timeout: int | float = args.readsb_request_timeout
 
         # mlat_server_input
         self.sync_json: str = args.sync_json
@@ -27,7 +28,6 @@ class Config:
         self.db_open_zip = self.db_open_dir + "open.zip"
         self.db_open = self.db_open_dir + "media/data/samples/metadata/aircraftDatabase.csv"
         self.url_open: str = args.url_online_db
-        self.timeout: int | float = args.db_request_timeout
 
         # database_input
         self.url_db: str = args.url_db

@@ -6,6 +6,7 @@ from uuid import uuid4, UUID
 
 import uvicorn
 from fastapi import FastAPI, Request
+from starlette.responses import Response
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
@@ -48,6 +49,8 @@ logger = logging.getLogger("MAIN")
 
 @app.middleware("http")
 async def middleware(request: Request, call_next):
+    if request.method not in ["POST", "GET"]:
+        return Response("Method not allowed", status_code=405)
     session_db = SessionLocal()
     request.state.session_db = session_db
 
@@ -103,8 +106,9 @@ async def sync_clients_and_db():
 
 
 async def run():
+    logger.info("Starting...")
     global result
-    asyncio.get_event_loop().set_debug(False)
+    asyncio.get_event_loop().set_debug(True)
 
     await setup_database()
 
@@ -118,6 +122,7 @@ async def run():
     if platform.system() == "Windows":
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
+    logger.info("Downloading opensky aircraft info database and updating aircraft ")
     await asyncio.gather(query_updater.update_query(True), query_updater.update_db())
     logger.info("Let's start Fastapi")
     asyncio.create_task(asyncio.to_thread(fastapi_start))

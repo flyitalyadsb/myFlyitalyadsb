@@ -98,7 +98,7 @@ class QueryUpdater:
 
             logger.debug("Readsb webserver Online, using it")
         else:
-            logger.debug("using aircraft.json")
+            logger.info("using aircraft.json")
             async with aiofiles.open(config.aircraft_json, 'r') as file:
                 content = await file.read()
                 self.data = ujson.loads(content)

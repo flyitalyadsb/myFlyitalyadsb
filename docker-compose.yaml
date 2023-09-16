@@ -5,12 +5,24 @@ services:
     container_name: myFlyitalyadsb
     restart: unless-stopped
     ports:
-     - "830:830"
+      - "830:830"
     entrypoint: /usr/local/bin/python main.py
     command:
       - --server-listen
       - "0.0.0.0:830"
+      - --url-db
+      - ${URL_DB}
     volumes:
-     - ./deployment/json:/json
-     - ./deployment/dati:/dati
-     - ./deployment/mlat:/mlat
+      - ./deployment/json:/json
+      - ./deployment/dati:/dati
+      - ./deployment/mlat:/mlat
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_USER: ${UTENTE_DB}
+      POSTGRES_PASSWORD: ${PASSWORD_DB}
+      POSTGRES_DB: ${NOME_DB}
+    volumes:
+      - ${POSTGRES_DATA_PATH}:/var/lib/postgresql/data

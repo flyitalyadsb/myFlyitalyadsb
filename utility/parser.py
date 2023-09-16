@@ -39,9 +39,12 @@ def readsb_input(parser):
                         default="/json/ingest/clients.json")
 
     parser.add_argument('--url-readsb',
-                        help="Url to readsb. example: readsb:30152 if you have your readsb with --net-tar1090-api 20152 "
+                        help="Url to readsb. example: readsb:30152 if you have your readsb with --net-tar1090-api 20152"
                              "in a docker container named readsb",
                         default="https://mappa.flyitalyadsb.com/re-api/?all")
+    parser.add_argument('--readsb-request-timeout',
+                        help="write results in CSV format to a local file.",
+                        default=3)
 
 
 def mlat_server_input(parser):
@@ -61,9 +64,7 @@ def online_database_input(parser):
     parser.add_argument('--url-online-db',
                         help="write results in CSV format to a local file.",
                         default="https://opensky-network.org/datasets/metadata/aircraftDatabase.zip")
-    parser.add_argument('--db-request-timeout',
-                        help="write results in CSV format to a local file.",
-                        default=5)
+
 
 
 def database_input(parser):
@@ -92,7 +93,7 @@ def web(parser):
 def frequencies(parser):
     parser.add_argument('--aircraft-update',
                         help="write results in CSV format to a local file.",
-                        default=0.5)
+                        default=0.2)
     parser.add_argument('--clients-and-db-update',
                         help="write results in CSV format to a local file.",
                         default=25)
