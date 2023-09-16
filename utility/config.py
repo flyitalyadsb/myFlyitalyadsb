@@ -40,9 +40,8 @@ class Config:
         self.per_page: int = args.per_page
 
         self.aircraft_update = args.aircraft_update
-        self.clients_and_db_update: int | float = args.clients_and_db_update  # time to wait until next sync_clients_and_db
-
-
+        self.clients_and_db_update: int | float = args.clients_and_db_update  # time to wait until next
+        # sync_clients_and_db
 
 
 args_gotten = get_args()

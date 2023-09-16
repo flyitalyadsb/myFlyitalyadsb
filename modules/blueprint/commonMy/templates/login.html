@@ -75,11 +75,10 @@
             </div>
             <div class="control-group">
                 {{ form.uuid() }}
-
             </div>
             {{ form.submit() }}
             <br>
-            <a href="https://flyitalyadsb.com/guida-statistiche">Don't you know your UUID?</a>
+            <a href="https://flyitalyadsb.com/myflyitalyadsb/#come-accedere">Don't you know your UUID?</a>
             {% with message = get_flashed_messages(request) %}
                 {% if message %}
                     <div class="success alert-success alert-dismissible show" role="alert">
@@ -88,7 +87,6 @@
                 {% endif %}
             {% endwith %}
         </div>
-    </div>
     </div>
 </form>
 

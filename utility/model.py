@@ -4,11 +4,17 @@ from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float, Tabl
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship, backref
 from utility.config import config
+
 DATABASE_URL = config.url_db
 
 engine = create_async_engine(DATABASE_URL, echo=False, future=True)
 SessionLocal = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False, autoflush=False)
 Base = declarative_base()
+
+
+async def setup_database():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
 
 class Aircraft(Base):
@@ -42,9 +48,9 @@ class AircraftRep:
 
 receiver_peers_association = Table('receiver_peers', Base.metadata,
                                    Column('receiver_id', Integer, ForeignKey('receiver.id'),
-                                            primary_key=True),
+                                          primary_key=True),
                                    Column('peer_id', Integer, ForeignKey('receiver.id'),
-                                            primary_key=True)
+                                          primary_key=True)
                                    )
 
 
@@ -52,7 +58,7 @@ class Receiver(Base):
     __tablename__ = "receiver"
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(40))
-    uuid = Column(String(22), unique=True, nullable=True)
+    uuid = Column(String, unique=True, nullable=True)
     position_counter = Column(Float)
     timed_out_counter = Column(Float)
     lat_min = Column(Float)
