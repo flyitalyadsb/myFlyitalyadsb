@@ -11,6 +11,7 @@ services:
       - --server-listen
       - "0.0.0.0:830"
     volumes:
+      - ./deployment/db:/database
       - ./deployment/json:/json
       - ./deployment/dati:/dati
       - ./deployment/mlat:/mlat

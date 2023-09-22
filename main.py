@@ -24,7 +24,6 @@ def fastapi_start():
 async def sync_clients_and_db():
     session = SessionLocal()
     logger.info("Starting Aircraft_DB and Clients!")
-
     while True:
         await add_aircrafts_to_db(session)
         await clients(session)
@@ -37,11 +36,15 @@ async def run():
     asyncio.get_event_loop().set_debug(False)
 
     await setup_database()
+    if config.asyncio_debug:
+        asyncio.get_event_loop().set_debug(True)
 
     if config.debug:
         asyncio.get_event_loop().set_debug(True)
         await asyncio.gather(query_updater.update_query(True), query_updater.update_db())
-        await sync_clients_and_db()
+        session = SessionLocal()
+        await add_aircrafts_to_db(session)
+        await clients(session)
         atexit.register(print_result)
         return
 
@@ -55,7 +58,7 @@ async def run():
 
     logger.info("Starting all...")
 
-    result = await asyncio.gather(query_updater.update_query(), sync_clients_and_db())
+    result = await asyncio.gather(sync_clients_and_db(), query_updater.update_query())
 
 
 asyncio.run(run())

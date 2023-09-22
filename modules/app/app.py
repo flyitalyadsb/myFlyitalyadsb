@@ -41,10 +41,11 @@ logger = logging.getLogger("MAIN")
 async def middleware(request: Request, call_next):
     if request.method not in ["POST", "GET"]:
         return Response("Method not allowed", status_code=405)
+
     session_db = SessionLocal()
     request.state.session_db = session_db
 
-    logger.debug("Middleware: before roue")
+    logger.debug("Middleware: before route")
 
     session_uuid = UUID(str(request.cookies.get("session_uuid", uuid4())))
 
@@ -59,12 +60,14 @@ async def middleware(request: Request, call_next):
             session_db.add(session)
 
         request.state.session = session
-
-        if not session.logged_in:
-            response = await dologin(request, next_page=str(request.url))
-            response.set_cookie(key="session_uuid", value=session_uuid, httponly=True)
-        else:
+        if session.logging and request.url.path == "/login":
             response = await call_next(request)
+        else:
+            if not session.logged_in:
+                response = await dologin(request, next_page=str(request.url))
+                response.set_cookie(key="session_uuid", value=session_uuid, httponly=True)
+            else:
+                response = await call_next(request)
 
         await session_db.commit()
         logger.debug(f"Selected page after response: {session.selected_page}, url path: {request.url.path}")

@@ -9,7 +9,7 @@ from starlette.responses import RedirectResponse
 
 from common_py.common import flash, get_flashed_message
 from utility.forms import LoginForm
-from utility.model import Receiver
+from utility.model import Receiver, SessionData
 
 commonMy_bp = APIRouter()
 templates = Jinja2Templates(
@@ -32,6 +32,7 @@ def real_login(request: Request, uuid: str, check_exist: Receiver):
 @commonMy_bp.api_route('/login', methods=["GET", "POST"])
 async def dologin(request: Request, next_page: str = None, uuid: str = None):
     session_db: AsyncSession = request.state.session_db
+    session: SessionData = request.state.session
     if next_page:
         request.state.session.next = next_page
     else:
@@ -46,6 +47,7 @@ async def dologin(request: Request, next_page: str = None, uuid: str = None):
 
     form = await LoginForm.from_formdata(request)
     if (request.method == 'POST' and await form.validate_on_submit()) or (Request.method == 'GET' and uuid):
+        session.logging = False
         uuid = uuid.lower() if uuid else form.uuid.data
         check_exist = await session_db.execute(select(Receiver).filter_by(uuid=uuid))
         check_exist = check_exist.scalar_one_or_none()
@@ -55,6 +57,7 @@ async def dologin(request: Request, next_page: str = None, uuid: str = None):
             flash(request, 'UUID errata')
             return templates.TemplateResponse("login.html", {"request": request, "form": form})
 
-        return RedirectResponse(url=request.state.session.next)
+        return RedirectResponse(url=request.state.session.next, status_code=302)
     else:
+        session.logging = True
         return templates.TemplateResponse("login.html", {"request": request, "form": form})

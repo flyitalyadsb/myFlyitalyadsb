@@ -23,6 +23,11 @@ def server_main(parser):
                         action='store_true',
                         default=False
                         )
+    parser.add_argument('--only-asyncio-debug',
+                        help="set asyncio in debug mode",
+                        action='store_true',
+                        default=False
+                        )
 
 
 def readsb_input(parser):
@@ -41,7 +46,7 @@ def readsb_input(parser):
     parser.add_argument('--url-readsb',
                         help="Url to readsb. example: readsb:30152 if you have your readsb with --net-tar1090-api 20152"
                              "in a docker container named readsb",
-                        default="https://mappa.flyitalyadsb.com/re-api/?all")
+                            default="https://mappa.flyitalyadsb.com/re-api/?all")
     parser.add_argument('--readsb-request-timeout',
                         help="write results in CSV format to a local file.",
                         default=3)
@@ -70,7 +75,7 @@ def online_database_input(parser):
 def database_input(parser):
     parser.add_argument('--url-db',
                         help="write results in CSV format to a local file.",
-                        default="sqlite+aiosqlite:///db.sqlite")
+                        default="sqlite+aiosqlite:////database/db.sqlite")
 
 
 def unix_input(parser):
@@ -96,7 +101,7 @@ def frequencies(parser):
                         default=0.2)
     parser.add_argument('--clients-and-db-update',
                         help="write results in CSV format to a local file.",
-                        default=25)
+                        default=3)
 
 
 def get_parser():

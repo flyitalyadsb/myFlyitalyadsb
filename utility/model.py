@@ -135,6 +135,7 @@ class SessionData(Base):
     report = Column(JSON)
     uuid = Column(String, ForeignKey('receiver.uuid'))
     logged_in = Column(Boolean)
+    logging = Column(Boolean)
     position = Column(Boolean)
     radius = Column(Integer)
     search = Column(String)

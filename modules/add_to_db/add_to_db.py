@@ -2,7 +2,7 @@ import datetime
 import logging
 from typing import List, Dict
 
-from sqlalchemy import select
+from sqlalchemy import select, Sequence
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from tqdm import tqdm
@@ -33,7 +33,7 @@ async def add_aircrafts_to_db(session: AsyncSession):
     flight_query = await session.execute(
         select(Flight).options(selectinload(Flight.receiver)).filter(Flight.aircraft_id.in_(filter)).order_by(
             Flight.id.desc()))
-    flight_list: List[Flight] = flight_query.scalars().all()
+    flight_list: Sequence[Flight] = flight_query.scalars().all()
     flight_dict = {flight.aircraft_id: flight for flight in flight_list}
 
     result = await session.execute(select(Receiver))
