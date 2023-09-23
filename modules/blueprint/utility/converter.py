@@ -84,31 +84,3 @@ def convert_globe_to_db():
                         db.session.commit()
 
 
-def app_context(f):
-    if asyncio.iscoroutinefunction(f):
-        async def decorated(*args, **kwargs):
-            with app.app_context():
-                with db.session.no_autoflush:
-                    return await f(*args, **kwargs)
-    else:
-        def decorated(*args, **kwargs):
-            with app.app_context():
-                with db.session.no_autoflush:
-                    return f(*args, **kwargs)
-
-    return decorated
-
-
-@app_context
-def get_aircrafts(db_tar, data):
-    global icao_presenti_nel_db
-    aircrafts = data["aircraft"]
-    for aircraft in aircrafts:
-        if aircraft["hex"] not in aircraft_cache:
-            info = getINFO_or_add_aircraft(database_open, aircraft["hex"], icao_presenti_nel_db)
-        else:
-            info = aircraft_cache[aircraft["hex"]]
-        aircraft["info"] = info
-        aircraft["edit"] = "https://listavoli.flyitalyadsb.com/editor?icao=" + aircraft["hex"]
-
-    return aircrafts

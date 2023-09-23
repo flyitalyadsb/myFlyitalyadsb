@@ -27,7 +27,77 @@ Access is straightforward:
 
 ## Installation ⚙️
 
-_in progress..._
+1. Clone the repository:
+   ```
+   git clone https://github.com/flyitalyadsb/flarm-ogn-to-sbs.git
+   cd flarm-ogn-to-sbs
+   ```
+
+2. Install the required dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+
+## ⚙️ Configuration and Execution with Docker Compose
+
+1. Navigate to your repository's directory.
+
+2. Use Docker Compose to run the service:
+   ```
+   docker-compose up -d
+   ```
+
+3. If you need to make configuration changes, modify the `docker-compose.yml` file and restart the service:
+
+   ```
+   docker-compose down && docker-compose up -d
+   ```
+
+
+## Command-Line Options for MyFlyitalyadsb ⚙️⚙️
+
+### Main Options
+
+- `--server-listen`: Specify the address and port for the server to listen on. Format: `'host:port'`. Default: `0.0.0.0:83`.
+- `--debug`: Enables debug mode. Default is set to `False`.
+- `--only-asyncio-debug`: Enables asyncio debug mode. Default is set to `False`.
+
+### Readsb Options
+
+- `--aircraft-json`: Path to the aircraft JSON data file. Default: `/json/aircraft.json`.
+- `--receivers-json`: Path to the receivers JSON data file. Default: `/json/ingest/receivers.json`.
+- `--clients-json`: Path to the clients JSON data file. Default: `/json/ingest/clients.json`.
+- `--url-readsb`: URL to readsb service. Default: `https://mappa.flyitalyadsb.com/re-api/?all`.
+- `--readsb-request-timeout`: Timeout duration for readsb requests (in seconds). Default: `3`.
+
+### Mlat Server Options
+
+- `--sync-json`: Path to the synchronization JSON data file. Default: `/mlat/sync.json`.
+- `--clients-mlat-json`: Path to the mlat clients JSON data file. Default: `/mlat/clients.json`.
+
+### Online Database Options
+
+- `--online-db-path`: Local path for the online database storage. Default: `/dati`.
+- `--url-online-db`: URL to fetch the online aircraft database. Default: `https://opensky-network.org/datasets/metadata/aircraftDatabase.zip`.
+
+### Database Options
+
+- `--url-db`: Database connection URL. Default: `sqlite+aiosqlite:////database/db.sqlite`.
+
+### Unix Options
+
+- `--unix`: Use Unix instead of HTTP for connecting to the readsb API. Default is set to `False`.
+- `--unix_socket`: Path to the Unix socket for readsb API. Default: `unix:/run/readsb/api.sock`.
+
+### Web Options
+
+- `--per-page`: Specify the number of results displayed per page. Default: `50`.
+
+### Update Frequencies Options
+
+- `--aircraft-update`: Set the frequency of aircraft updates (in seconds). Default: `0.2`.
+- `--clients-and-db-update`: Set the frequency of clients and database updates (in seconds). Default: `3`.
+
 
 ## Contribution ✨
 

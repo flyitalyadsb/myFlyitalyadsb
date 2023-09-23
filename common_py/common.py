@@ -9,7 +9,7 @@ from typing import List
 
 import aiofiles
 import aiohttp
-import ujson
+import orjson
 from cachetools import LRUCache
 from fastapi import Request
 from sqlalchemy.future import select
@@ -85,7 +85,7 @@ class QueryUpdater:
 
     async def real_update_query(self):
         if config.unix:
-            data = ujson.loads(await self.fetch_data_from_unix())
+            data = orjson.loads(await self.fetch_data_from_unix())
         else:
             async with aiohttp.ClientSession() as session:
                 data = await fetch_data_from_url(config.url_readsb, session)
@@ -101,7 +101,7 @@ class QueryUpdater:
             logger.info("using aircraft.json")
             async with aiofiles.open(config.aircraft_json, 'r') as file:
                 content = await file.read()
-                self.data = ujson.loads(content)
+                self.data = orjson.loads(content)
                 self.aircraft = deepcopy(self.data["aircraft"])
                 self.aircraft_raw = self.data["aircraft"]
 
@@ -137,12 +137,15 @@ class QueryUpdater:
                 await asyncio.sleep(config.aircraft_update)
 
     async def fetch_data_from_unix(self):
-        #todo
         await self.writer.drain()
 
         data = await self.reader.read(-1)
+        decoded_data = data.decode()
 
-        return data.decode()
+        try:
+            return orjson.loads(decoded_data)
+        except orjson.JSONDecodeError:
+            return {}
 
     async def update_db(self):
         logger.info("Extracting tar1090's database ...")

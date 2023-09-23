@@ -2,7 +2,7 @@ import asyncio
 import logging
 import re
 import aiofiles
-import ujson
+import orjson
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from tqdm import tqdm
@@ -17,7 +17,7 @@ async def read_file(filename):
     async with aiofiles.open(filename, "r") as file:
         data = await file.read()
 
-        parsed_data = ujson.loads(data)
+        parsed_data = orjson.loads(data)
         if filename == config.receiver_json:
             return parsed_data["receivers"]
         elif filename == config.clients_json:

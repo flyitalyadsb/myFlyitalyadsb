@@ -14,10 +14,9 @@ def host_and_ports(string):
 
 def server_main(parser):
     parser.add_argument('--server-listen',
-                        help="listen on a host:tcp_port",
+                        help="Specify the address and port for the server to listen on (format: 'host:port').",
                         type=host_and_ports,
-                        default="0.0.0.0:83"
-                        )
+                        default="0.0.0.0:83")
     parser.add_argument('--debug',
                         help="enter in debug mode",
                         action='store_true',
@@ -32,75 +31,75 @@ def server_main(parser):
 
 def readsb_input(parser):
     parser.add_argument('--aircraft-json',
-                        help="write results in CSV format to a local file.",
+                        help="Path to the aircraft JSON data file.",
                         default="/json/aircraft.json")
 
     parser.add_argument('--receivers-json',
-                        help="write results in CSV format to a local file.",
+                        help="Path to the receivers JSON data file.",
                         default="/json/ingest/receivers.json")
 
     parser.add_argument('--clients-json',
-                        help="write results in CSV format to a local file.",
+                        help="Path to the clients JSON data file.",
                         default="/json/ingest/clients.json")
 
     parser.add_argument('--url-readsb',
-                        help="Url to readsb. example: readsb:30152 if you have your readsb with --net-tar1090-api 20152"
-                             "in a docker container named readsb",
-                            default="https://mappa.flyitalyadsb.com/re-api/?all")
+                        help="URL to readsb service.",
+                        default="https://mappa.flyitalyadsb.com/re-api/?all")
+
     parser.add_argument('--readsb-request-timeout',
-                        help="write results in CSV format to a local file.",
+                        help="Timeout duration for readsb requests (in seconds).",
                         default=3)
 
 
 def mlat_server_input(parser):
     parser.add_argument('--sync-json',
-                        help="write results in CSV format to a local file.",
+                        help="Path to the synchronization JSON data file.",
                         default="/mlat/sync.json")
 
     parser.add_argument('--clients-mlat-json',
-                        help="write results in CSV format to a local file.",
+                        help="Path to the mlat clients JSON data file.",
                         default="/mlat/clients.json")
 
 
 def online_database_input(parser):
     parser.add_argument('--online-db-path',
-                        help="write results in CSV format to a local file.",
+                        help="Local path for the online database storage.",
                         default="/dati")
-    parser.add_argument('--url-online-db',
-                        help="write results in CSV format to a local file.",
-                        default="https://opensky-network.org/datasets/metadata/aircraftDatabase.zip")
 
+    parser.add_argument('--url-online-db',
+                        help="URL to fetch the online aircraft database.",
+                        default="https://opensky-network.org/datasets/metadata/aircraftDatabase.zip")
 
 
 def database_input(parser):
     parser.add_argument('--url-db',
-                        help="write results in CSV format to a local file.",
+                        help="Database connection URL.",
                         default="sqlite+aiosqlite:////database/db.sqlite")
 
 
 def unix_input(parser):
     parser.add_argument('--unix',
-                        help="Use unix instead http to connect to readsb api",
+                        help="Flag to use Unix instead of HTTP for connecting to the readsb API.",
                         action='store_true',
                         default=False
                         )
-    parser.add_argument('--unix_socket',
-                        help="Path to unix socket, default: unix:/run/readsb/api.sock",
+    parser.add_argument('--unix-socket',
+                        help="Path to the Unix socket for readsb API.",
                         default="unix:/run/readsb/api.sock")
 
 
 def web(parser):
     parser.add_argument('--per-page',
-                        help="write results in CSV format to a local file.",
+                        help="Specify the number of results displayed per page.",
                         default=50)
 
 
 def frequencies(parser):
     parser.add_argument('--aircraft-update',
-                        help="write results in CSV format to a local file.",
+                        help="Set the frequency of aircraft updates (in seconds).",
                         default=0.2)
     parser.add_argument('--clients-and-db-update',
-                        help="write results in CSV format to a local file.",
+                        help="Set the frequency of clients and database updates (in seconds).",
                         default=3)
 
 

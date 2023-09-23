@@ -151,7 +151,7 @@
                             <a href="https://mappa.flyitalyadsb.com?icao={{ volo['icao'].lower() }}&showTrace={{ volo.start.strftime('%Y-%m-%d') }}"
                                class="btn btn-sm btn-outline-secondary">Report</a></td>
                         <td>{{ volo["squawk"] if volo["squawk"] is defined else '' }}</td>
-                        <td><a href={{ "https://listaflights.flyitalyadsb.com/editor?icao=" + volo['icao'] }}>Edit info
+                        <td><a href={{ "https://my.flyitalyadsb.com/editor?icao=" + volo['icao'] }}>Edit info
                             </a></td>
 
                     </tr>

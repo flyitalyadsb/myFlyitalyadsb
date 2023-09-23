@@ -1,17 +1,23 @@
 services:
   myflyitalyadsb:
-    build: ./
-    #image: ghcr.io/flyitalyadsb/myflyitalyadsb:latest
+    image: ghcr.io/flyitalyadsb/myflyitalyadsb:latest
     container_name: myFlyitalyadsb
     restart: unless-stopped
     ports:
-      - "830:830"
+      - "84:84"
     entrypoint: /usr/local/bin/python main.py
     command:
       - --server-listen
-      - "0.0.0.0:830"
+      - "0.0.0.0:84"
+      - --clients-and-db-update
+      - "0"
+      - --url-readsb
+      - "http://readsb_globe:30152/?all"
+#      - --url-db
+#      - ${URL_DB}
     volumes:
-      - ./deployment/db:/database
-      - ./deployment/json:/json
-      - ./deployment/dati:/dati
-      - ./deployment/mlat:/mlat
+     - ${MYFLYITALYADSB_DATA_PATH}/src:/src
+     - ${READSB_DATA_PATH}/json:/json
+     - ${MYFLYITALYADSB_DATA_PATH}/dati:/dati
+     - ${MYFLYITALYADSB_DATA_PATH}/database:/database
+     - ${MLAT_SERVER_A_WORKDIR_PATH}:/mlat

@@ -17,11 +17,7 @@
 
 <div id="menu" class="container-fluid d-none justify-content-center align-items-center">
     <div class="row ">
-        <div class="col-md-auto text-center">
-            <form method="post">
-                {{ form.site(class="btn btn-light btn-block") }}
-            </form>
-        </div>
+
         <div class="col-md-auto text-center">
             <form method="post">
                 {{ form.my_map(class="btn btn-light btn-block") }}
@@ -40,6 +36,11 @@
         <div class="col-md-auto text-center">
             <form method="post">
                 {{ form.graphs(class="btn btn-light btn-block") }}
+            </form>
+        </div>
+        <div class="col-md-auto text-center">
+            <form method="post">
+                {{ form.site(class="btn btn-light btn-block") }}
             </form>
         </div>
     </div>
@@ -145,11 +146,19 @@
 
     let canvas_map = L.map('canvas_map').setView([my_receiver.lat, my_receiver.lon], 7);
 
+    const MyReceiverIcon = L.Icon.extend({
+        options: {
+            iconSize: [38, 95],
+            //iconAnchor: [22, 94],
+        }
+    });
+    const receiverIcon = new MyReceiverIcon({iconUrl: 'static/my_receiver_icon.png'});
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(canvas_map);
 
-    L.marker([my_receiver.lat, my_receiver.lon]).addTo(canvas_map)
+    L.marker([my_receiver.lat, my_receiver.lon], {icon: receiverIcon}).addTo(canvas_map)
         .bindPopup(my_receiver.nome)
         .openPopup();
 

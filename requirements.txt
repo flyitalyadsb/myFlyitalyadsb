@@ -9,11 +9,10 @@ SQLAlchemy==2.0.19
 starlette==0.27.0
 Starlette_WTF==0.4.3
 tqdm==4.65.2
-ujson==5.8.0
 uvicorn==0.23.2
 uvloop==0.17.0
 Werkzeug==2.3.6
 WTForms==3.0.1
 aiosqlite
-asyncpg
-aiomonitor
+aiomysql
+orjson~=3.9.7
