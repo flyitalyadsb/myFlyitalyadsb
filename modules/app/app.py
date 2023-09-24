@@ -6,6 +6,7 @@ from starlette.responses import Response
 from uuid import uuid4, UUID
 from fastapi import FastAPI, Request
 from modules.blueprint.commonMy.commonMy import commonMy_bp, dologin
+from modules.blueprint.am_i_feeding.am_i_feeding import amIFeeding_bp
 from modules.blueprint.live.live import live_bp
 from modules.blueprint.my_map.my_map import mappa_bp
 from modules.blueprint.report.report import report_bp
@@ -25,6 +26,7 @@ def create_app():
     app.include_router(utility_bp)
     app.include_router(commonMy_bp)
     app.include_router(mappa_bp)
+    app.include_router(amIFeeding_bp)
     app.mount("/static", StaticFiles(directory="static"), name="static")
 
     if platform.system() != "Windows":
@@ -49,7 +51,7 @@ async def middleware(request: Request, call_next):
 
     session_uuid = UUID(str(request.cookies.get("session_uuid", uuid4())))
 
-    if request.url.path not in ["/style.css"]:
+    if request.url.path not in ["/style.css", "am_i_feeding"]:
         result_middleware = await session_db.execute(
             select(SessionData).options(joinedload(SessionData.receiver)).filter_by(session_uuid=session_uuid)
         )

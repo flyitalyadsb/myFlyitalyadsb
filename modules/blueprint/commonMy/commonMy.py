@@ -29,6 +29,13 @@ def real_login(request: Request, uuid: str, check_exist: Receiver):
     request.state.ricevitore = check_exist
 
 
+async def check_ip(request: Request, session_db: AsyncSession) -> Receiver:
+    forwarded_ip = request.headers.get("X-Forwarded-For")
+    client_ip = forwarded_ip.split(",")[0] if forwarded_ip else request.client.host
+    receiver = await search_receiver_by_ip(session_db, client_ip)
+    return receiver
+
+
 @commonMy_bp.api_route('/login', methods=["GET", "POST"])
 async def dologin(request: Request, next_page: str = None, uuid: str = None):
     session_db: AsyncSession = request.state.session_db
@@ -38,9 +45,7 @@ async def dologin(request: Request, next_page: str = None, uuid: str = None):
     else:
         request.state.session.next = str(request.url).rstrip(request.url.path)
 
-    forwarded_ip = request.headers.get("X-Forwarded-For")
-    client_ip = forwarded_ip.split(",")[0] if forwarded_ip else request.client.host
-    receiver = await search_receiver_by_ip(session_db, client_ip)
+    receiver = await check_ip(request, session_db)
     if receiver:
         real_login(request, receiver.uuid, receiver)
         return RedirectResponse(url=request.state.session.next)
