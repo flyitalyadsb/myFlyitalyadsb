@@ -20,7 +20,7 @@ templates.env.globals["get_flashed_messages"] = get_flashed_message
 
 async def search_receiver_by_ip(session_db: AsyncSession, ip: str) -> Receiver:
     result: Result = await session_db.execute(select(Receiver).filter_by(ip=ip))
-    return result.scalar_one_or_none()
+    return result.scalars().first()
 
 
 def real_login(request: Request, uuid: str, check_exist: Receiver):
