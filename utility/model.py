@@ -21,14 +21,14 @@ async def setup_database():
 class Aircraft(Base):
     __tablename__ = "aircraft"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    icao = Column(String(20), nullable=False)
-    registration = Column(String(100))
-    icao_type_code = Column(String(20))
+    icao = Column(String(7), nullable=False)
+    registration = Column(String(20))
+    icao_type_code = Column(String(3))
     type = Column(String(100))
     civ_mil = Column(Boolean)
-    operator = Column(String(160))
-    serial_number = Column(String(160))
-    operator_icao = Column(String(160))
+    operator = Column(String(100))
+    serial_number = Column(String(100))
+    operator_icao = Column(String(3))
 
     def repr(self):
         repr = AircraftRep(self.id, self.icao, self.registration, self.icao_type_code, self.type, self.civ_mil,
@@ -59,7 +59,7 @@ class Receiver(Base):
     __tablename__ = "receiver"
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(40))
-    uuid = Column(String, unique=True, nullable=True)
+    uuid = Column(String(36), unique=True, nullable=True)
     position_counter = Column(Float)
     timed_out_counter = Column(Float)
     lat_min = Column(Float)
@@ -72,7 +72,7 @@ class Receiver(Base):
     lon = Column(Float)
     alt = Column(Float)
     session_data = relationship('SessionData', back_populates='receiver')
-    ip = Column(String(40))
+    ip = Column(String(15))
     messagges_per_sec = Column(Integer)
     peers = relationship('Receiver',
                          secondary=receiver_peers_association,
@@ -94,7 +94,7 @@ class Flight(Base):
     aircraft = relationship('Aircraft', backref='flight')
     start = Column(DateTime)
     end = Column(DateTime)
-    squawk = Column(String(40))
+    squawk = Column(String(4))
     ended = Column(Boolean())
     receiver = relationship('Receiver', secondary=flights_receiver, backref=backref('flight', lazy=True))
 
@@ -131,17 +131,17 @@ class SessionData(Base):
     __tablename__ = "session_data"
     id = Column(Integer, primary_key=True, autoincrement=True)
     session_uuid = Column(Uuid)
-    message = Column(String)
+    message = Column(String(100))
     report = Column(JSON)
-    uuid = Column(String, ForeignKey('receiver.uuid'))
+    uuid = Column(String(36), ForeignKey('receiver.uuid'))
     logged_in = Column(Boolean)
     logging = Column(Boolean)
     position = Column(Boolean)
     radius = Column(Integer)
-    search = Column(String)
+    search = Column(String(50))
     selected_page = Column(Integer)
-    filter = Column(String)
-    sort = Column(String)
+    filter = Column(String(50))
+    sort = Column(String(10))
     only_mine = Column(Boolean)
     mode = Column(PickleType)
     receiver = relationship('Receiver', back_populates='session_data')
