@@ -1,7 +1,7 @@
 services:
   myflyitalyadsb:
-    #build: ./
-    image: ghcr.io/flyitalyadsb/myflyitalyadsb:latest
+    build: ./
+    #image: ghcr.io/flyitalyadsb/myflyitalyadsb:latest
     container_name: myFlyitalyadsb
     restart: unless-stopped
     ports:
