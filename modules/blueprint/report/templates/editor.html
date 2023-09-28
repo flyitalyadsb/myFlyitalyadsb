@@ -34,7 +34,7 @@
                     </div>
                     <div class="form-group">
                         {{ form.civmil.label(class="form-control-label") }}
-                        {{ form.civmil(class="form-control", placeholder=(aircraft.civ_mil if aircraft else '') | default('UNKNOWN'))  }}
+                        {{ form.civmil(class="form-check-input", placeholder=(aircraft.civ_mil if aircraft else '') | default('UNKNOWN'))  }}
                     </div>
                     <div class="form-group">
                         {{ form.operator.label(class="form-control-label") }}
