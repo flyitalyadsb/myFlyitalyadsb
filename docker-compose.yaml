@@ -1,7 +1,7 @@
 services:
   myflyitalyadsb:
-    build: ./
-    #image: ghcr.io/flyitalyadsb/myflyitalyadsb:latest
+    #build: ./
+    image: ghcr.io/flyitalyadsb/myflyitalyadsb:latest
     container_name: myFlyitalyadsb
     restart: unless-stopped
     ports:
@@ -10,42 +10,25 @@ services:
     command:
       - --server-listen
       - "0.0.0.0:84"
-      - --clients-and-db-update
-      - "0"
 #      - --url-readsb
-#     - "http://readsb_globe:30152/?all"
+#     - "http://readsb_globe:30152/?all" uncomment and change it with your data source
       - --url-db
       - ${URL_DB}
     volumes:
-      - ./deployment/db:/database
-      - ./deployment/json:/json
-      - ./deployment/dati:/dati
-      - ./deployment/mlat:/mlat
+      - ./deployment/db:/database #must be edited with your data
+      - ./deployment/json:/json #must be edited with your data
+      - ./deployment/dati:/dati #must be edited with your data
+      - ./deployment/mlat:/mlat #must be edited with your data
 
-  mysql:
-    image: mysql:latest
-    container_name: mysql
-    command: --default-authentication-plugin=mysql_native_password
-    restart: always
+  postgres:
+    image: postgres:latest
+    container_name: postgres
     environment:
-      MYSQL_ROOT_PASSWORD: ${ROOT_PASSWORD_DB}
-      MYSQL_DATABASE: ${NOME_DB}
-      MYSQL_USER: ${UTENTE_DB}
-      MYSQL_PASSWORD: ${PASSWORD_DB}
+      POSTGRES_DB: ${NOME_DB}
+      POSTGRES_USER: ${UTENTE_DB}
+      POSTGRES_PASSWORD: ${PASSWORD_DB}
     ports:
-      - "3307:3306"
-#    volumes:
-#      - ${MYSQL_DATA_PATH}:/var/lib/mysql
+      - "5433:5432"
+    volumes:
+      - ${POSTGRES_DATA_PATH}:/var/lib/postgresql/data
 
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    container_name: phpmyadmin
-    restart: always
-    environment:
-      PMA_HOST: mysql
-      PMA_USER: ${UTENTE_DB}
-      PMA_PASSWORD: ${PASSWORD_DB}
-    ports:
-      - "5050:80"
-    depends_on:
-      - mysql

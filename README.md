@@ -39,7 +39,10 @@ Access is straightforward:
    ```
 
 ## ⚙️ Configuration and Execution with Docker Compose
+### Configuration
+By default, SQLite is used as the database. However, it is highly recommended to use PostgreSQL with asyncpg. An example connection string passed with `--url-db is`: `postgresql+asyncpg://${USER_DB}:${PASSWORD_DB}@{IP_DB}/${NAME_DB}`.
 
+### Execution
 1. Navigate to your repository's directory.
 
 2. Use Docker Compose to run the service:

@@ -2,6 +2,8 @@ import asyncio
 import atexit
 import logging
 import platform
+
+import aiomonitor
 import uvicorn
 
 from common_py.common import query_updater, print_result
@@ -41,29 +43,30 @@ async def run():
     await setup_database()
     if config.asyncio_debug:
         asyncio.get_event_loop().set_debug(True)
+        m = aiomonitor.start_monitor(asyncio.get_running_loop())
 
     if config.debug:
         asyncio.get_event_loop().set_debug(True)
+        m = aiomonitor.start_monitor(asyncio.get_running_loop())
         await asyncio.gather(query_updater.update_query(True), query_updater.update_db())
         session = SessionLocal()
         await add_aircrafts_to_db(session)
         await clients(session)
-        atexit.register(print_result)
         return
 
     if platform.system() == "Windows":
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
     logger.info("Downloading opensky aircraft info database and updating aircraft ")
-    await asyncio.gather(query_updater.update_query(True), query_updater.update_db(), fastapi_start())
-    logger.info("Let's start Fastapi")
+    await asyncio.gather(query_updater.update_query(True), query_updater.update_db())
 
     logger.info("Starting all...")
 
     result = await asyncio.gather(
         sync_clients_and_db(),
         query_updater.update_query(),
-        remove_unused()
+        remove_unused(),
+        fastapi_start()
     )
 
 
