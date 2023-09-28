@@ -1,6 +1,7 @@
 import datetime
 
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float, Table, PickleType, Uuid, DateTime, JSON
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float, Table, PickleType, Uuid, DateTime, JSON, \
+    StaticPool
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship, backref
 from utility.config import config
@@ -22,12 +23,12 @@ class Aircraft(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     icao = Column(String(7), nullable=False)
     registration = Column(String(20))
-    icao_type_code = Column(String(3))
+    icao_type_code = Column(String(5))
     type = Column(String(100))
     civ_mil = Column(Boolean)
     operator = Column(String(100))
     serial_number = Column(String(100))
-    operator_icao = Column(String(3))
+    operator_icao = Column(String(5))
 
     def repr(self):
         repr = AircraftRep(self.id, self.icao, self.registration, self.icao_type_code, self.type, self.civ_mil,
@@ -61,6 +62,7 @@ class Receiver(Base):
     uuid = Column(String(36), unique=True, nullable=True)
     position_counter = Column(Float)
     timed_out_counter = Column(Float)
+    last_seen = Column(DateTime)
     lat_min = Column(Float)
     lat_max = Column(Float)
     lon_min = Column(Float)
@@ -130,6 +132,7 @@ class SessionData(Base):
     __tablename__ = "session_data"
     id = Column(Integer, primary_key=True, autoincrement=True)
     session_uuid = Column(Uuid)
+    last_seen = Column(DateTime)
     message = Column(String(100))
     report = Column(JSON)
     uuid = Column(String(36), ForeignKey('receiver.uuid'))

@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import logging
 import platform
 
@@ -29,9 +30,9 @@ def create_app():
     app.include_router(amIFeeding_bp)
     app.mount("/static", StaticFiles(directory="static"), name="static")
 
-    if platform.system() != "Windows":
-        import uvloop
-        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+    # if platform.system() != "Windows":
+    #    import uvloop
+    #    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     return app
 
 
@@ -51,7 +52,7 @@ async def middleware(request: Request, call_next):
 
     session_uuid = UUID(str(request.cookies.get("session_uuid", uuid4())))
 
-    if request.url.path not in ["/style.css", "am_i_feeding"]:
+    if request.url.path not in ["/style.css", "/am_i_feeding"]:
         result_middleware = await session_db.execute(
             select(SessionData).options(joinedload(SessionData.receiver)).filter_by(session_uuid=session_uuid)
         )
@@ -60,7 +61,7 @@ async def middleware(request: Request, call_next):
         if not session:
             session = SessionData(session_uuid=session_uuid)
             session_db.add(session)
-
+        session.last_seen = datetime.datetime.now()
         request.state.session = session
         if session.logging and request.url.path == "/login":
             response = await call_next(request)

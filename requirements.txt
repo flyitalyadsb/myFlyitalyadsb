@@ -16,3 +16,4 @@ WTForms==3.0.1
 aiosqlite
 aiomysql
 orjson~=3.9.7
+asyncpg

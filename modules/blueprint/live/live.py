@@ -122,7 +122,7 @@ async def session_data(request: Request):
 
 @live_bp.get("/table")
 async def table_pagination_func(request: Request, position: str = False, only_mine: str = False, page: int = 1,
-                                sort_by: str = "hex", search: str = None):
+                                sort_by: str = "hex", search: str = None, where: str = None):
     session = request.state.session
 
     receiver: Receiver = session.receiver
@@ -145,13 +145,25 @@ async def table_pagination_func(request: Request, position: str = False, only_mi
         data_filtered = [row
                          for row in sliced_aircrafts
                          if
-                         (search in row['hex']) or
-                         (row["info"] is not None and row["info"].registration is not None and search in row[
-                             "info"].registration) or
-                         (row.get('flight') is not None and search in row['flight']) or
-                         (row.get('squawk') is not None and search in row['squawk']) or
-                         (row["info"] is not None and row['info'].operator is not None and search in row[
-                             'info'].operator)
+                         (where == "Everywhere" and
+                          ((search in row['hex']) or
+                          (row["info"] is not None and row["info"].registration is not None and search in row[
+                              "info"].registration) or
+                          (row["info"] is not None and row['info'].operator is not None and search in row[
+                              'info'].operator)) or
+                          (row.get('flight') is not None and search in row['flight']) or
+                          (row.get('squawk') is not None and search in row['squawk']))
+
+                         or
+                         (where == "hex" and search in row['squawk']) or
+                         (where == "registration" and (
+                                     row["info"] is not None and row["info"].registration is not None and search in row[
+                                 "info"].registration)) or
+                         (where == "operator" and (
+                                     row["info"] is not None and row['info'].operator is not None and search in row[
+                                 'info'].operator)) or
+                         (where == "flight" and (row.get('flight') is not None and search in row['flight'])) or
+                         (where == "squawk" and (row.get('squawk') is not None and search in row['squawk']))
                          ]
 
         sliced_aircrafts, pagination = await pagination_func(logger=live_bp.logger, page=page,

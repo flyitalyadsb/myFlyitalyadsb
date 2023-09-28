@@ -8,6 +8,7 @@ from common_py.common import query_updater, print_result
 from modules.add_to_db.add_to_db import add_aircrafts_to_db
 
 from modules.clients.clients import clients
+from modules.remove_unused.remove_unused import remove_unused
 from utility.config import config
 from utility.model import SessionLocal, setup_database
 
@@ -17,8 +18,10 @@ result = ""
 atexit.register(print_result, result)
 
 
-def fastapi_start():
-    uvicorn.run("modules.app.app:app", host=config.host, port=config.port, loop="none")
+async def fastapi_start():
+    configuration = uvicorn.Config("modules.app.app:app", host=config.host, port=config.port, loop="auto")
+    server = uvicorn.Server(configuration)
+    await server.serve()
 
 
 async def sync_clients_and_db():
@@ -52,13 +55,16 @@ async def run():
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
     logger.info("Downloading opensky aircraft info database and updating aircraft ")
-    await asyncio.gather(query_updater.update_query(True), query_updater.update_db())
+    await asyncio.gather(query_updater.update_query(True), query_updater.update_db(), fastapi_start())
     logger.info("Let's start Fastapi")
-    asyncio.create_task(asyncio.to_thread(fastapi_start))
 
     logger.info("Starting all...")
 
-    result = await asyncio.gather(sync_clients_and_db(), query_updater.update_query())
+    result = await asyncio.gather(
+        sync_clients_and_db(),
+        query_updater.update_query(),
+        remove_unused()
+    )
 
 
 asyncio.run(run())

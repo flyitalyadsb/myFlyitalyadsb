@@ -1,7 +1,7 @@
 services:
   myflyitalyadsb:
-    #build: ./
-    image: ghcr.io/flyitalyadsb/myflyitalyadsb:latest
+    build: ./
+    #image: ghcr.io/flyitalyadsb/myflyitalyadsb:latest
     container_name: myFlyitalyadsb
     restart: unless-stopped
     ports:
@@ -14,8 +14,8 @@ services:
       - "0"
 #      - --url-readsb
 #     - "http://readsb_globe:30152/?all"
-#      - --url-db
-#      - ${URL_DB}
+      - --url-db
+      - ${URL_DB}
     volumes:
       - ./deployment/db:/database
       - ./deployment/json:/json

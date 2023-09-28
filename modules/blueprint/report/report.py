@@ -91,14 +91,14 @@ async def show_or_edit_aircraft(request: Request, icao: str = None):
         if aircraft_db:
             aircraft_db.registration = reg if reg else aircraft_db.registration
             aircraft_db.type = model if model else aircraft_db.type
-            aircraft_db.civ_mil = civmil if not None else aircraft_db.civ_mil
+            aircraft_db.civ_mil = civmil if civmil is not None else aircraft_db.civ_mil
             aircraft_db.operator = operator if operator else aircraft_db.operator
             await session_db.commit()
             if icao.lower() in aircraft_cache:
                 aircraft_cache.pop(icao.lower())
             flash(request, 'Aircraft successfully modified.')
         else:
-            session_db.add(Aircraft(icao=icao.upper(), Registration=reg, Type=model, CivMil=civmil, Operator=operator))
+            session_db.add(Aircraft(icao=icao.upper(), registration=reg, type=model, civ_mil=civmil, operator=operator))
             await session_db.commit()
             if icao.lower() in aircraft_cache:
                 aircraft_cache.pop(icao.lower())

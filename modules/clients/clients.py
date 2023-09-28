@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import logging
 import re
 import aiofiles
@@ -44,6 +45,7 @@ async def clients(session):
 
         # Base data
         base_data = {
+            'last_seen':datetime.datetime.now(),
             'uuid': uuid,
             'position_counter': receiver_readsb[1],
             'timed_out_counter': receiver_readsb[2],

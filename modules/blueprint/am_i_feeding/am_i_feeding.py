@@ -1,3 +1,5 @@
+import datetime
+
 from fastapi import APIRouter, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,7 +15,7 @@ async def am_i_feeding(request: Request):
     receiver: Receiver = await check_ip(request, session_db)
     beast = False
     mlat = False
-    if receiver:
+    if receiver and datetime.datetime.now() - receiver.last_seen < datetime.timedelta(seconds=30):
         beast = True
         if receiver.lat:
             mlat = True
