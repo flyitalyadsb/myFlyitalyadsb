@@ -10,7 +10,6 @@ starlette==0.27.0
 Starlette_WTF==0.4.3
 tqdm==4.65.2
 uvicorn==0.23.2
-uvloop==0.17.0
 Werkzeug==2.3.6
 WTForms==3.0.1
 aiosqlite
