@@ -1,0 +1,4 @@
+/venv
+/postgresql
+.gitignore
+/deployment

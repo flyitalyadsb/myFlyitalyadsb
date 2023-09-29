@@ -47,6 +47,7 @@ def readsb_input(parser):
                         default="https://mappa.flyitalyadsb.com/re-api/?all")
 
     parser.add_argument('--readsb-request-timeout',
+                        type=int,
                         help="Timeout duration for readsb requests (in seconds).",
                         default=3)
 
