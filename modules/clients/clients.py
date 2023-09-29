@@ -27,6 +27,34 @@ async def read_file(filename):
             return parsed_data
 
 
+def remove_duplicates(files):
+    general = []
+    for list in files:
+        seen = set()
+        result = []
+        for nested in list:
+            if nested[0] not in seen:
+                seen.add(nested[0])
+                result.append(nested)
+        general.append(result)
+    return general
+
+
+def remove_mlat_duplicates(general_dict: dict):
+    seen = set()
+    result = {}
+
+    for key, value in general_dict.items():
+        if isinstance(value["uuid"], list) and value["uuid"][0] not in seen:
+            seen.add(value["uuid"][0])
+            result[key] = value
+        elif not isinstance(value["uuid"], list) and value["uuid"] not in seen:
+            seen.add(value["uuid"])
+            result[key] = value
+
+    return result
+
+
 async def clients(session):
     receivers_readsb, clients_readsb, clients_mlat, sync_mlat = await asyncio.gather(
         read_file(config.receiver_json),
@@ -34,6 +62,8 @@ async def clients(session):
         read_file(config.clients_mlat_json),
         read_file(config.sync_json)
     )
+    receivers_readsb, clients_readsb = remove_duplicates([receivers_readsb, clients_readsb])
+    clients_mlat = remove_mlat_duplicates(clients_mlat)
 
     # Get existing receivers from database
     ric_query = await session.execute(select(Receiver).options(selectinload(Receiver.peers)))
@@ -45,7 +75,7 @@ async def clients(session):
 
         # Base data
         base_data = {
-            'last_seen':datetime.datetime.now(),
+            'last_seen': datetime.datetime.now(),
             'uuid': uuid,
             'position_counter': receiver_readsb[1],
             'timed_out_counter': receiver_readsb[2],
@@ -56,7 +86,7 @@ async def clients(session):
             'lat_avg': receiver_readsb[8],
             'lon_avg': receiver_readsb[9],
             'messagges_per_sec': client_readsb[4],
-            'ip':  re.search(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b", client_readsb[1]).group(0)
+            'ip': re.search(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b", client_readsb[1]).group(0)
         }
 
         # Update if receiver exists
@@ -68,7 +98,8 @@ async def clients(session):
             session.add(ric)
 
         # Additional data from mlat clients
-        client_mlat_data = next((c for c in clients_mlat.values() if c["uuid"] and (c["uuid"] == uuid or uuid in c["uuid"])), None)
+        client_mlat_data = next(
+            (c for c in clients_mlat.values() if c["uuid"] and (c["uuid"] == uuid or uuid in c["uuid"])), None)
 
         if client_mlat_data:
             ric.lat = client_mlat_data["lat"]

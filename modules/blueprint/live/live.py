@@ -121,18 +121,18 @@ async def session_data(request: Request):
 
 
 def matches_search_criteria(row, search, where):
-    if where == "Everywhere":
+    if where == "everywhere":
         return (search in row.get('hex', '')) or \
-            (row.get("info") and search in row["info"].get('registration', '')) or \
-            (row.get("info") and search in row["info"].get('operator', '')) or \
+            (row.get("info") and row["info"].registration is not None and search in row["info"].registration) or \
+            (row.get("info") and row["info"].operator is not None and search in row["info"].operator) or \
             (search in row.get('flight', '')) or \
             (search in row.get('squawk', ''))
     elif where == "hex":
         return search in row.get('hex', '')
     elif where == "registration":
-        return row.get("info") and search in row["info"].get('registration', '')
+        return row.get("info") and row["info"].registration is not None and search in row["info"].registration
     elif where == "operator":
-        return row.get("info") and search in row["info"].get('operator', '')
+        return row.get("info") and row["info"].operator is not None and search in row["info"].operator
     elif where == "flight":
         return search in row.get('flight', '')
     elif where == "squawk":

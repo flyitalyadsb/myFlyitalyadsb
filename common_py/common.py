@@ -75,7 +75,7 @@ class QueryUpdater:
         self.database_open: dict[str:DatabaseDict] = {}  # database opensky
         self.reports: List = []
         self.aircraft_to_be_served: List[float, dict, bool] = [0, {},
-                                                               False]  # timestamp, aircrafts with info, in execution
+                                                               False]  # timestamp, aircraft with info, in execution
 
     async def get_icao_from_db(self):
         async with SessionLocal() as session_db:
