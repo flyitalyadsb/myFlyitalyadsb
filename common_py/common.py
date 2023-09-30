@@ -57,12 +57,15 @@ async def download_file(url: str, destination: str) -> None:
 
 
 async def fetch_data_from_url(url: str, session) -> dict:
-    async with session.get(url, timeout=config.timeout) as response:
-        if response.status == 200:
-            return await response.json()
-        else:
-            return {}
-
+    try:
+        async with session.get(url, timeout=config.timeout) as response:
+            if response.status == 200:
+                return await response.json()
+            else:
+                return {}
+    except TimeoutError as e:
+        logger.error(f"Timeout error while fetching data from {url}")
+        return {}
 
 class QueryUpdater:
     def __init__(self):
@@ -85,12 +88,12 @@ class QueryUpdater:
 
     async def real_update_query(self):
         if config.unix:
-            data = orjson.loads(await self.fetch_data_from_unix())
+            data = await self.fetch_data_from_unix()
         else:
             async with aiohttp.ClientSession() as session:
                 data = await fetch_data_from_url(config.url_readsb, session)
 
-        if data:
+        if data != {}:
             logger.debug("using readsb")
             self.data = data
             self.aircraft = deepcopy(self.data["aircraft"])
@@ -105,7 +108,7 @@ class QueryUpdater:
                 self.aircraft = deepcopy(self.data["aircraft"])
                 self.aircraft_raw = self.data["aircraft"]
 
-            logger.info("used aircraft.json")
+            logger.debug("used aircraft.json")
 
     async def aicrafts_filtered_by_my_receiver(self, session, my=False):
         filtered_aircrafts = []
