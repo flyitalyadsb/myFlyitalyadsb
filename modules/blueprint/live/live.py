@@ -144,7 +144,7 @@ def matches_search_criteria(row, search, where):
 async def table_pagination_func(request: Request, position: str = False, only_mine: str = False, page: int = 1,
                                 sort_by: str = "hex", search: str = None, where: str = None):
     session = request.state.session
-
+    session_db = request.state.session_db
     receiver: Receiver = session.receiver
     if position:
         aircs = get_near_aircraft(int(position), query_updater.aircraft, receiver)
@@ -153,18 +153,18 @@ async def table_pagination_func(request: Request, position: str = False, only_mi
                                               {"request": request, "aircrafts": aircs,
                                                "buttons": []},
                                               headers={"Cache-Control": "no-store", "Expires": "0"})
-        sliced_aircrafts, pagination = await pagination_func(logger=live_bp.logger, page=page, aircrafts_func=aircs)
+        sliced_aircrafts, pagination = await pagination_func(session_db, logger=live_bp.logger, page=page, aircrafts_func=aircs)
     elif only_mine:
         custom_aircrafts = await query_updater.aicrafts_filtered_by_my_receiver(session)
-        sliced_aircrafts, pagination = await pagination_func(logger=live_bp.logger, page=page,
+        sliced_aircrafts, pagination = await pagination_func(session_db, logger=live_bp.logger, page=page,
                                                              aircrafts_func=custom_aircrafts)
     else:
-        sliced_aircrafts, pagination = await pagination_func(logger=live_bp.logger, page=page,
+        sliced_aircrafts, pagination = await pagination_func(session_db, logger=live_bp.logger, page=page,
                                                              aircrafts_func=query_updater.aircraft)
     if search:
         data_filtered = [row for row in sliced_aircrafts if matches_search_criteria(row, search, where)]
 
-        sliced_aircrafts, pagination = await pagination_func(logger=live_bp.logger, page=page,
+        sliced_aircrafts, pagination = await pagination_func(session_db, logger=live_bp.logger, page=page,
                                                              aircrafts_func=data_filtered,
                                                              live=False)
     if sort_by == "registration":

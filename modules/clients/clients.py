@@ -7,7 +7,6 @@ import orjson
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from tqdm import tqdm
-
 from utility.config import config
 from utility.model import Receiver
 
@@ -62,7 +61,7 @@ async def clients(session):
         read_file(config.clients_mlat_json),
         read_file(config.sync_json)
     )
-    receivers_readsb, clients_readsb = remove_duplicates([receivers_readsb, clients_readsb])
+    *receivers_readsb, clients_readsb = remove_duplicates([receivers_readsb, clients_readsb])
     clients_mlat = remove_mlat_duplicates(clients_mlat)
 
     # Get existing receivers from database
@@ -117,6 +116,7 @@ async def clients(session):
                 if peers:
                     ric.peers.extend(peers)
         except Exception as e:
+            print(client_readsb, clients_readsb)
             print(f"Receiver: {client_readsb[0]} not elaborated, error: {e}")
 
     # Processing

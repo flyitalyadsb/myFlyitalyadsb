@@ -4,6 +4,7 @@ import logging
 import zipfile
 from copy import deepcopy
 from io import BytesIO
+from pathlib import Path
 from typing import Any
 from typing import List
 
@@ -97,6 +98,7 @@ class QueryUpdater:
             logger.debug("using readsb")
             self.data = data
             self.aircraft = deepcopy(self.data["aircraft"])
+            print(len(self.aircraft))
             self.aircraft_raw = self.data["aircraft"]
 
             logger.debug("Readsb webserver Online, using it")
@@ -125,6 +127,7 @@ class QueryUpdater:
     async def update_query(self, first=False):
         logger.info("Starting update query!")
         if first:
+            Path(config.db_open_dir).mkdir(parents=True, exist_ok=True)
             if config.unix:
                 self.reader, self.writer = await asyncio.open_unix_connection(config.unix_socket)
             await self.real_update_query()
@@ -140,13 +143,58 @@ class QueryUpdater:
                 await asyncio.sleep(config.aircraft_update)
 
     async def fetch_data_from_unix(self):
+        # Send an HTTP GET request
+        request = "GET /?all HTTP/1.1\r\nHost: localhost\r\nConnection: keep-alive\r\n\r\n"
+        self.writer.write(request.encode())
         await self.writer.drain()
 
-        data = await self.reader.read(-1)
-        decoded_data = data.decode()
+        # Read the headers
+        headers_buffer = bytearray()
+        while True:
+            chunk = await self.reader.read(4096)  # Read in chunks of 4 KB
+            if not chunk:
+                return {}
+
+            headers_buffer.extend(chunk)
+            if b"\r\n\r\n" in headers_buffer:
+                break
+
+        headers_data = headers_buffer.decode()
+
+        if "\r\n\r\n" not in headers_data:
+            return {}
+
+        headers, body_start = headers_data.split("\r\n\r\n", 1)
+
+        # Extract Content-Length value from headers
+        content_length = None
+        for line in headers.split("\r\n"):
+            if line.lower().startswith("content-length:"):
+                try:
+                    content_length = int(line.split(":")[1].strip())
+                except (ValueError, IndexError):
+                    return {}
+                break
+
+        if content_length is None:
+            return {}
+
+        # Read the body based on content_length
+        body_buffer = bytearray(body_start.encode())
+        bytes_to_read = content_length - len(body_buffer)
+
+        while bytes_to_read > 0:
+            chunk = await self.reader.read(min(bytes_to_read, 4096))
+            if not chunk:
+                return {}
+            body_buffer.extend(chunk)
+            bytes_to_read -= len(chunk)
+
+        body = body_buffer.decode()
 
         try:
-            return orjson.loads(decoded_data)
+            data = orjson.loads(body)
+            return data
         except orjson.JSONDecodeError:
             return {}
 

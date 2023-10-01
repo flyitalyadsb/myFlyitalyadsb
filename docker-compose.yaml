@@ -15,9 +15,8 @@ services:
       - --url-db
       - ${URL_DB}
     volumes:
-      - ./deployment/db:/database #must be edited with your data
+      - ./deployment/db:/database #must be edited with your data (if you have chosen .sqlite)
       - ./deployment/json:/json #must be edited with your data
-      - ./deployment/dati:/dati #must be edited with your data
       - ./deployment/mlat:/mlat #must be edited with your data
 
   postgres:

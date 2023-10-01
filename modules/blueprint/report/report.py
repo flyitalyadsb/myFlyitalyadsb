@@ -30,7 +30,7 @@ async def report(request: Request, page: int = None):
     if page:
         session.selected_page = page
         past_report = query_updater.reports[session.report]
-        sliced_aircrafts, pagination = await pagination_func(logger=report_bp.logger, page=page,
+        sliced_aircrafts, pagination = await pagination_func(session_db, logger=report_bp.logger, page=page,
                                                              aircrafts_func=past_report,
                                                              live=False)
         return templates.TemplateResponse('report.html',
@@ -70,7 +70,7 @@ async def report(request: Request, page: int = None):
             flights_list.append(FlightRep(flight).to_dict())
         query_updater.reports.append(flights_list)
         session.report = query_updater.reports.index(flights_list)
-        sliced_aircrafts, pagination = await pagination_func(logger=report_bp.logger, page=1, aircrafts_func=flights_list,
+        sliced_aircrafts, pagination = await pagination_func(session_db, logger=report_bp.logger, page=1, aircrafts_func=flights_list,
                                                              live=False)
     return templates.TemplateResponse('report.html',
                                       {"request": request, "form": form, "flights": sliced_aircrafts,

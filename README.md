@@ -29,8 +29,8 @@ Access is straightforward:
 
 1. Clone the repository:
    ```
-   git clone https://github.com/flyitalyadsb/flarm-ogn-to-sbs.git
-   cd flarm-ogn-to-sbs
+   git clone https://github.com/flyitalyadsb/myflyitalyadsb.git
+   cd myflyitalyadsb
    ```
 
 2. Install the required dependencies:
@@ -80,7 +80,7 @@ By default, SQLite is used as the database. However, it is highly recommended to
 
 ### Online Database Options
 
-- `--online-db-path`: Local path for the online database storage. Default: `/dati`.
+- `--online-db-path`: Local path for the online database storage. Default: `./dati`.
 - `--url-online-db`: URL to fetch the online aircraft database. Default: `https://opensky-network.org/datasets/metadata/aircraftDatabase.zip`.
 
 ### Database Options
@@ -98,7 +98,7 @@ By default, SQLite is used as the database. However, it is highly recommended to
 
 ### Update Frequencies Options
 
-- `--aircraft-update`: Set the frequency of aircraft updates (in seconds). Default: `0.2`.
+- `--aircraft-update`: Set the frequency of aircraft updates (in seconds). Default: `0.5`.
 - `--clients-and-db-update`: Set the frequency of clients and database updates (in seconds). Default: `3`.
 
 

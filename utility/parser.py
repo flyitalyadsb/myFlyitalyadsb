@@ -65,7 +65,7 @@ def mlat_server_input(parser):
 def online_database_input(parser):
     parser.add_argument('--online-db-path',
                         help="Local path for the online database storage.",
-                        default="/dati")
+                        default="./dati")
 
     parser.add_argument('--url-online-db',
                         help="URL to fetch the online aircraft database.",
@@ -86,7 +86,7 @@ def unix_input(parser):
                         )
     parser.add_argument('--unix-socket',
                         help="Path to the Unix socket for readsb API.",
-                        default="unix:/run/readsb/api.sock")
+                        default="/json/api.sock")
 
 
 def web(parser):
@@ -98,7 +98,7 @@ def web(parser):
 def frequencies(parser):
     parser.add_argument('--aircraft-update',
                         help="Set the frequency of aircraft updates (in seconds).",
-                        default=0.2)
+                        default=0.5)
     parser.add_argument('--clients-and-db-update',
                         help="Set the frequency of clients and database updates (in seconds).",
                         default=3)

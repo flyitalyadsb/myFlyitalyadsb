@@ -28,7 +28,7 @@ async def real_add_aircraft_to_db(session: AsyncSession, receivers_dict: Dict[st
 
 
 async def add_aircrafts_to_db(session: AsyncSession):
-    aircrafts = await get_info_or_add_aircraft_total()
+    aircrafts = await get_info_or_add_aircraft_total(session)
     filter = [aircraft["info"].id for aircraft in aircrafts]
     flight_query = await session.execute(
         select(Flight).options(selectinload(Flight.receiver)).filter(Flight.aircraft_id.in_(filter)).order_by(
