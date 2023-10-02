@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import RedirectResponse
 
 from common_py.common import flash, get_flashed_message
+from utility.config import config
 from utility.forms import LoginForm
 from utility.model import Receiver, SessionData
 
@@ -26,6 +27,8 @@ async def search_receiver_by_ip(session_db: AsyncSession, ip: str) -> Receiver:
 def real_login(request: Request, uuid: str, check_exist: Receiver):
     request.state.session.logged_in = True
     request.state.session.uuid = uuid
+    if check_exist.name in config.editors and not check_exist.editor:
+        check_exist.editor = True
     request.state.ricevitore = check_exist
 
 

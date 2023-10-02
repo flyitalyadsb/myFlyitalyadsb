@@ -61,7 +61,7 @@ async def clients(session):
         read_file(config.clients_mlat_json),
         read_file(config.sync_json)
     )
-    *receivers_readsb, clients_readsb = remove_duplicates([receivers_readsb, clients_readsb])
+    receivers_readsb, clients_readsb = remove_duplicates([receivers_readsb, clients_readsb])
     clients_mlat = remove_mlat_duplicates(clients_mlat)
 
     # Get existing receivers from database

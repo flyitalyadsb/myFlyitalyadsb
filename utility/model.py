@@ -69,6 +69,7 @@ class Receiver(Base):
     lon_max = Column(Float)
     lat_avg = Column(Float)
     lon_avg = Column(Float)
+    editor = Column(Boolean)
     lat = Column(Float)
     lon = Column(Float)
     alt = Column(Float)

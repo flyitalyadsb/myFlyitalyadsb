@@ -1,7 +1,7 @@
 import logging
 from typing import List
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, HTTPException
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
@@ -9,7 +9,7 @@ from sqlalchemy.orm import joinedload
 from common_py.common import query_updater, aircraft_cache
 from common_py.commonLiveReport import pagination_func
 from utility.forms import ReportForm, EditForm
-from utility.model import Flight, Aircraft, SessionData, flights_receiver
+from utility.model import Flight, Aircraft, SessionData, flights_receiver, Receiver
 from utility.model import FlightRep
 from common_py.common import flash, get_flashed_message
 
@@ -79,34 +79,39 @@ async def report(request: Request, page: int = None):
 
 @report_bp.api_route("/editor", methods=["GET", "POST"])
 async def show_or_edit_aircraft(request: Request, icao: str = None):
-    session_db = request.state.session_db
-    form: EditForm = await EditForm.from_formdata(request)
-    result = await session_db.execute(select(Aircraft).filter_by(icao=icao))
-    aircraft_db: Aircraft = result.scalar_one_or_none()
-    if await form.validate_on_submit():
-        reg = form.reg.data
-        model = form.model.data
-        civmil = form.civmil.data
-        operator = form.operator.data
-        if aircraft_db:
-            aircraft_db.registration = reg if reg else aircraft_db.registration
-            aircraft_db.type = model if model else aircraft_db.type
-            aircraft_db.civ_mil = civmil if civmil is not None else aircraft_db.civ_mil
-            aircraft_db.operator = operator if operator else aircraft_db.operator
-            await session_db.commit()
-            if icao.lower() in aircraft_cache:
-                aircraft_cache.pop(icao.lower())
-            flash(request, 'Aircraft successfully modified.')
-        else:
-            session_db.add(Aircraft(icao=icao.upper(), registration=reg, type=model, civ_mil=civmil, operator=operator))
-            await session_db.commit()
-            if icao.lower() in aircraft_cache:
-                aircraft_cache.pop(icao.lower())
-            flash(request, 'Aircraft successfully added')
+    receiver: Receiver = request.state.session.receiver
+    if receiver.editor:
+        session_db = request.state.session_db
+        form: EditForm = await EditForm.from_formdata(request)
+        result = await session_db.execute(select(Aircraft).filter_by(icao=icao))
+        aircraft_db: Aircraft = result.scalar_one_or_none()
+        if await form.validate_on_submit():
+            reg = form.reg.data
+            model = form.model.data
+            civmil = form.civmil.data
+            operator = form.operator.data
+            if aircraft_db:
+                aircraft_db.registration = reg if reg else aircraft_db.registration
+                aircraft_db.type = model if model else aircraft_db.type
+                aircraft_db.civ_mil = civmil if civmil is not None else aircraft_db.civ_mil
+                aircraft_db.operator = operator if operator else aircraft_db.operator
+                await session_db.commit()
+                if icao.lower() in aircraft_cache:
+                    aircraft_cache.pop(icao.lower())
+                flash(request, 'Aircraft successfully modified.')
+            else:
+                session_db.add(
+                    Aircraft(icao=icao.upper(), registration=reg, type=model, civ_mil=civmil, operator=operator))
+                await session_db.commit()
+                if icao.lower() in aircraft_cache:
+                    aircraft_cache.pop(icao.lower())
+                flash(request, 'Aircraft successfully added')
 
-    if aircraft_db:
-        aircraft = aircraft_db.repr()
+        if aircraft_db:
+            aircraft = aircraft_db.repr()
+        else:
+            aircraft = None
+        return templates.TemplateResponse('editor.html',
+                                          {"request": request, "aircraft": aircraft, "form": form, "icao": icao})
     else:
-        aircraft = None
-    return templates.TemplateResponse('editor.html',
-                                      {"request": request, "aircraft": aircraft, "form": form, "icao": icao})
+        raise HTTPException(status_code=403, detail="Not authorized")
