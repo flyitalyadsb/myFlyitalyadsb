@@ -98,7 +98,6 @@ class QueryUpdater:
             logger.debug("using readsb")
             self.data = data
             self.aircraft = deepcopy(self.data["aircraft"])
-            print(len(self.aircraft))
             self.aircraft_raw = self.data["aircraft"]
 
             logger.debug("Readsb webserver Online, using it")

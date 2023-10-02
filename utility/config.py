@@ -1,4 +1,6 @@
 from argparse import Namespace
+from typing import List
+
 from utility.parser import get_args
 
 
@@ -43,6 +45,9 @@ class Config:
         self.aircraft_update = float(args.aircraft_update)
         self.clients_and_db_update: int | float = float(args.clients_and_db_update)  # time to wait until next
         # sync_clients_and_db
+
+        # web-admin
+        self.editors: List = args.editors
 
 
 args_gotten = get_args()

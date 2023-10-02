@@ -26,7 +26,9 @@
         <th>Operator</th>
         <th>Military</th>
         <th>Map</th>
-        <th>Editor</th>
+        {% if receiver.editor %}
+            <th>Editor</th>
+        {% endif %}
     </tr>
     </thead>
     <tbody class="table-group-divider">
@@ -51,8 +53,9 @@
             {% endif %}
             <td><a href="{{ 'https://mappa.flyitalyadsb.com?icao=' + a['info'].icao.lower() }}"
                    class="btn btn-sm btn-outline-secondary">{{ a['info'].icao }}</a></td>
-            <td><a href={{ "https://my.flyitalyadsb.com/editor?icao=" + a['info'].icao }}>Edit
-                Info</a></td>
+            {% if receiver.editor %}
+                <td><a href={{ "https://my.flyitalyadsb.com/editor?icao=" + a['info'].icao }}>Edit Info</a></td>
+            {% endif %}
         </tr>
     {% endfor %}
     </tbody>

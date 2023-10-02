@@ -153,7 +153,8 @@ async def table_pagination_func(request: Request, position: str = False, only_mi
                                               {"request": request, "aircrafts": aircs,
                                                "buttons": []},
                                               headers={"Cache-Control": "no-store", "Expires": "0"})
-        sliced_aircrafts, pagination = await pagination_func(session_db, logger=live_bp.logger, page=page, aircrafts_func=aircs)
+        sliced_aircrafts, pagination = await pagination_func(session_db, logger=live_bp.logger, page=page,
+                                                             aircrafts_func=aircs)
     elif only_mine:
         custom_aircrafts = await query_updater.aicrafts_filtered_by_my_receiver(session)
         sliced_aircrafts, pagination = await pagination_func(session_db, logger=live_bp.logger, page=page,
@@ -180,8 +181,8 @@ async def table_pagination_func(request: Request, position: str = False, only_mi
         sliced_aircrafts.sort(
             key=lambda x: x["squawk"] if x.get("squawk") is not None else "")
     return templates.TemplateResponse("table.html",
-                                      {"request": request, "aircrafts": sliced_aircrafts, "buttons": pagination},
-                                      headers={"Cache-Control": "no-store", "Expires": "0"})
+                                      {"request": request, "aircrafts": sliced_aircrafts, "buttons": pagination,
+                                       "receiver": receiver}, headers={"Cache-Control": "no-store", "Expires": "0"})
 
 
 @live_bp.get("/data_raw")

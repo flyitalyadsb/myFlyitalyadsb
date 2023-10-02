@@ -104,6 +104,14 @@ def frequencies(parser):
                         default=3)
 
 
+def web_admin(parser):
+    parser.add_argument('--editors',
+                        type=str,
+                        help="The names of receivers able to edit aircraft-db and access to /editor.",
+                        default=[],
+                        nargs="+")
+
+
 def get_parser():
     parser = argparse.ArgumentParser(description="MyFlyitalyadsb")
     server_main(parser.add_argument_group("Main options"))
@@ -111,7 +119,7 @@ def get_parser():
     mlat_server_input(parser.add_argument_group('Mlat server options'))
     online_database_input(parser.add_argument_group('Online database options'))
     database_input(parser.add_argument_group('Database options'))
-
+    web_admin(parser.add_argument_group("Web-admin options"))
     unix_input(parser.add_argument_group('Unix options'))
     web(parser.add_argument_group('Web options'))
     frequencies(parser.add_argument_group("Update frequencies options"))
