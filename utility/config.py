@@ -42,9 +42,9 @@ class Config:
         # web
         self.per_page: int = int(args.per_page)
 
+        # sync_clients_and_db
         self.aircraft_update = float(args.aircraft_update)
         self.clients_and_db_update: int | float = float(args.clients_and_db_update)  # time to wait until next
-        # sync_clients_and_db
 
         # web-admin
         self.editors: List = args.editors

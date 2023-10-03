@@ -101,6 +101,8 @@ By default, SQLite is used as the database. However, it is highly recommended to
 - `--aircraft-update`: Set the frequency of aircraft updates (in seconds). Default: `0.5`.
 - `--clients-and-db-update`: Set the frequency of clients and database updates (in seconds). Default: `3`.
 
+### Web Admin
+- `--editors`: The names of receivers able to edit aircraft-db and access /editor.
 
 ## Contribution ✨
 

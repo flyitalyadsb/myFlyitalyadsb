@@ -203,7 +203,7 @@
     }).addTo(canvas_map);
 
     L.marker([my_receiver.lat, my_receiver.lon], {icon: receiverIcon}).addTo(canvas_map)
-        .bindPopup(my_receiver.nome, {
+        .bindPopup(my_receiver.name, {
                 offset: new L.Point(0, -60)
             }
         ).openPopup();
@@ -211,7 +211,7 @@
 
     synced_receivers.forEach(synced_receiver => {
         L.marker([synced_receiver.lat, synced_receiver.lon]).addTo(canvas_map)
-            .bindPopup(synced_receiver.nome);
+            .bindPopup(synced_receiver.name);
 
         L.polyline([
             [my_receiver.lat, my_receiver.lon],
