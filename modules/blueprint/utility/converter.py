@@ -1,41 +1,19 @@
 import datetime
 import gzip
-import json
 import os
 
+from orjson import orjson
+from sqlalchemy import Result, select
+from common_py.commonLiveReport import add_aircraft_to_db
+from utility.model import Flight, SessionLocal, Aircraft
+
 dir = 'F:/globe_history_prova/'
+BATCH_SIZE = 1000
+session = SessionLocal()
 
 
-@app_context
-def getINFO_or_add_aircraft(database_open, icao: str, icao_presenti_nel_db):
-    if not icao.upper() in icao_presenti_nel_db:
-        app.logger.debug(f"{icao} non presente nel database")
-        link = "https://mappa.flyitalyadsb.com/?icao=" + icao
-        if icao.upper() in database_open.keys():  # icao presente nel db di tar1090
-            db_data = database_open[icao.upper()]
-            logging.debug(f"Aggiungo {icao} nel database interno")
-            reg = db_data["registration"]
-            type = db_data["icaoaircrafttype"]
-            model = db_data["model"]
-            db.session.add(Aerei(icao=icao.upper(), Registration=reg, ICAOTypeCode=type, Type=model, link=link))
-            db.session.commit()
-            info = Aerei.query.all()[-1]
-            aircraft_cache[icao] = info
-
-        else:
-            db.session.add(Aerei(icao=icao.upper(), link=link))
-            db.session.commit()
-            info = Aerei.query.all()[-1]
-            aircraft_cache[icao] = info
-    else:
-        logging.debug(f"{icao} presente nel nostro database, restituiamo le info che conosciamo")
-        info = Aerei.query.filter_by(icao=icao.upper()).first()
-        aircraft_cache[icao] = info
-    return info
-
-
-@app_context
-def convert_globe_to_db():
+async def convert_globe_to_db():
+    flights_to_add = []
     for year in os.scandir(dir):
         for month in os.scandir(year.path):
             for day in os.scandir(month.path):
@@ -43,7 +21,7 @@ def convert_globe_to_db():
                     for file in os.scandir(subclasses.path):
                         with gzip.open(file, 'rb') as json_file:
                             try:
-                                data = json.load(json_file)
+                                data = orjson.loads(json_file.read())
                             except:
                                 pass
                         icao = data["icao"]
@@ -67,20 +45,16 @@ def convert_globe_to_db():
                             squawk = trace[-1][8]["squawk"]
                         else:
                             squawk = ""
-                        if "flight" in fkeys:
-                            cl = trace[0][8]["flight"]
-                        elif "flight" in lkeys:
-                            cl = trace[-1][8]["flight"]
-                        else:
-                            cl = ""
-                        info = getINFO_or_add_aircraft(database_open, icao)
-                        if info.link:
-                            link_report = info.link + "&showTrace=" + ftime.strftime("%Y-%m-%d")
-                        else:
-                            link_report = ""
-                        db.session.add(
-                            Voli(aereo_id=info.id, squawk=squawk, inizio=ftime.timestamp(), fine=ltime.timestamp(),
-                                 link_report=link_report, traccia_conclusa=True))
-                        db.session.commit()
+                        result: Result = await session.execute(
+                            select(Aircraft).filter_by(icao=icao.upper()).order_by(Aircraft.id.desc()))
+                        info: Aircraft = result.scalars().first()
+                        if not info:
+                            info = await add_aircraft_to_db({"hex": icao}, session)
+                        flight = Flight(aircraft_id=info.id, squawk=squawk, start=ftime.timestamp(),
+                                        end=ltime.timestamp(), ended=True)
+                        flights_to_add.append(flight)
 
-
+                        if len(flights_to_add) >= BATCH_SIZE:
+                            session.bulk_save_objects(flights_to_add)
+                            await session.commit()
+                            flights_to_add.clear()

@@ -1,12 +1,11 @@
 services:
   myflyitalyadsb:
-    build: ./
-    #image: ghcr.io/flyitalyadsb/myflyitalyadsb:latest
+    #build: ./
+    image: ghcr.io/flyitalyadsb/myflyitalyadsb:latest
     container_name: myFlyitalyadsb
     restart: unless-stopped
     ports:
       - "84:84"
-    entrypoint: /usr/local/bin/python main.py
     command:
       - --server-listen
       - "0.0.0.0:84"

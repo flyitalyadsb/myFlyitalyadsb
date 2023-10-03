@@ -66,11 +66,13 @@ async def add_aircraft_to_db(aircraft, session_db):
         operator = db_data.operator
         serial_number = db_data.serialnumber
         operator_icao = db_data.operatoricao
-        session_db.add(Aircraft(icao=icao.upper(), registration=reg, icao_type_code=type, type=model, operator=operator,
-                             serial_number=serial_number, operator_icao=operator_icao))
+        aircraft_db = Aircraft(icao=icao.upper(), registration=reg, icao_type_code=type, type=model, operator=operator,
+                             serial_number=serial_number, operator_icao=operator_icao)
+        session_db.add(aircraft_db)
     else:
-        session_db.add(Aircraft(icao=icao.upper()))
-    return icao
+        aircraft_db = Aircraft(icao=icao.upper())
+        session_db.add(aircraft_db)
+    return aircraft_db
 
 
 async def update_cache_for_added_aircrafts(aircrafts_to_add, session_db):
