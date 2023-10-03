@@ -12,6 +12,10 @@ def host_and_ports(string):
             f"{string} should be in this formats: 'host:tcp_port'")
 
 
+def list_of_strings(arg):
+    return arg.split(',')
+
+
 def server_main(parser):
     parser.add_argument('--server-listen',
                         help="Specify the address and port for the server to listen on (format: 'host:port').",
@@ -106,10 +110,9 @@ def frequencies(parser):
 
 def web_admin(parser):
     parser.add_argument('--editors',
-                        type=str,
+                        type=list_of_strings,
                         help="The names of receivers able to edit aircraft-db and access to /editor.",
-                        default=[],
-                        nargs="+")
+                        )
 
 
 def get_parser():

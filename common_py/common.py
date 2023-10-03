@@ -88,11 +88,15 @@ class QueryUpdater:
         self.icao_in_database = icao_list
 
     async def real_update_query(self):
-        if config.unix:
-            data = await self.fetch_data_from_unix()
-        else:
-            async with aiohttp.ClientSession() as session:
-                data = await fetch_data_from_url(config.url_readsb, session)
+        try:
+            if config.unix:
+                data = await self.fetch_data_from_unix()
+            else:
+                async with aiohttp.ClientSession() as session:
+                    data = await fetch_data_from_url(config.url_readsb, session)
+        except Exception as e:
+            data = {}
+            logger.warning(f"While updating something failed:{e}, so we use aircraft.json")
 
         if data != {}:
             logger.debug("using readsb")

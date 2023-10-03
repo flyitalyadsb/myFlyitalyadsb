@@ -2,6 +2,8 @@ import asyncio
 import datetime
 import logging
 import re
+import socket
+
 import aiofiles
 import orjson
 from sqlalchemy import select
@@ -13,30 +15,33 @@ from utility.model import Receiver
 logger = logging.getLogger(__name__)
 
 
+def remove_duplicates(key, data):
+    if key not in data:
+        raise ValueError(f'The key "{key}" doesn\'t exists.')
+
+    unique_dict = {}
+    for item in data[key]:
+        item_key = item[0]
+        if item_key not in unique_dict:
+            unique_dict[item_key] = item[1:]
+    data[key] = [[item_key] + values for item_key, values in unique_dict.items()]
+
+    return data
+
+
 async def read_file(filename):
     async with aiofiles.open(filename, "r") as file:
         data = await file.read()
 
         parsed_data = orjson.loads(data)
         if filename == config.receiver_json:
+            parsed_data = remove_duplicates("receivers", parsed_data)
             return parsed_data["receivers"]
         elif filename == config.clients_json:
+            parsed_data = remove_duplicates("clients", parsed_data)
             return parsed_data["clients"]
         else:
             return parsed_data
-
-
-def remove_duplicates(files):
-    general = []
-    for list in files:
-        seen = set()
-        result = []
-        for nested in list:
-            if nested[0] not in seen:
-                seen.add(nested[0])
-                result.append(nested)
-        general.append(result)
-    return general
 
 
 def remove_mlat_duplicates(general_dict: dict):
@@ -54,6 +59,25 @@ def remove_mlat_duplicates(general_dict: dict):
     return result
 
 
+def convert_to_ip(input_string):
+    ip_match = re.search(r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b', input_string)
+    hostname_match = re.search(r'\b\w+\.\w+\b', input_string)
+    ip = "0.0.0.0"
+    if ip_match:
+        ip = ip_match.group(0)
+        logger.debug(f"IP found: {ip}")
+    elif hostname_match:
+        hostname = hostname_match.group(0)
+        try:
+            ip = socket.gethostbyname(hostname)
+        except socket.gaierror:
+            logger.debug(f"No ip found for hostname: {hostname}")
+    else:
+        logger.warning("No IP address or hostname found")
+
+    return ip
+
+
 async def clients(session):
     receivers_readsb, clients_readsb, clients_mlat, sync_mlat = await asyncio.gather(
         read_file(config.receiver_json),
@@ -61,7 +85,6 @@ async def clients(session):
         read_file(config.clients_mlat_json),
         read_file(config.sync_json)
     )
-    receivers_readsb, clients_readsb = remove_duplicates([receivers_readsb, clients_readsb])
     clients_mlat = remove_mlat_duplicates(clients_mlat)
 
     # Get existing receivers from database
@@ -86,7 +109,7 @@ async def clients(session):
                 'lat_avg': receiver_readsb[8],
                 'lon_avg': receiver_readsb[9],
                 'messagges_per_sec': client_readsb[4],
-                'ip': re.search(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b", client_readsb[1]).group(0)
+                'ip': convert_to_ip(client_readsb[1])
             }
 
             # Update if receiver exists

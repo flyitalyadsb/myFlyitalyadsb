@@ -56,7 +56,7 @@ async def get_peer_info(session_db, uuid):
         {
             'lat': ric.lat if ric.lat else ric.lat_avg,
             'lon': ric.lon if ric.lon else ric.lon_avg,
-            'nome': ric.name if ric.name else ric.uuid
+            'name': ric.name if ric.name else ric.uuid
         }
 
 
@@ -67,7 +67,7 @@ def anonymize_coordinates(item):
         result.append({
             'lat': float(data['lat']) + variation,
             'lon': float(data['lon']) + variation,
-            'nome': data['nome']
+            'name': data['name']
         })
     return result
 
