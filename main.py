@@ -39,7 +39,6 @@ async def run():
     logger.info("Starting...")
     global result
     asyncio.get_event_loop().set_debug(False)
-
     await setup_database()
     if config.asyncio_debug:
         asyncio.get_event_loop().set_debug(True)

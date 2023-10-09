@@ -23,12 +23,12 @@ class Aircraft(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     icao = Column(String(7), nullable=False)
     registration = Column(String(20))
-    icao_type_code = Column(String(10))
+    icao_type_code = Column(String(20))
     type = Column(String(100))
     civ_mil = Column(Boolean)
     operator = Column(String(100))
     serial_number = Column(String(100))
-    operator_icao = Column(String(10))
+    operator_icao = Column(String(20))
 
     def repr(self):
         repr = AircraftRep(self.id, self.icao, self.registration, self.icao_type_code, self.type, self.civ_mil,

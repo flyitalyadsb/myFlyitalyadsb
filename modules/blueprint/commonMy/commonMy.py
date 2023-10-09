@@ -34,7 +34,7 @@ def real_login(request: Request, uuid: str, check_exist: Receiver):
 
 async def check_ip(request: Request, session_db: AsyncSession) -> Receiver:
     forwarded_ip = request.headers.get("X-Forwarded-For")
-    client_ip = forwarded_ip.split(",")[0] if forwarded_ip else request.client.host
+    client_ip = forwarded_ip if forwarded_ip else request.client.host
     receiver = await search_receiver_by_ip(session_db, client_ip)
     return receiver
 

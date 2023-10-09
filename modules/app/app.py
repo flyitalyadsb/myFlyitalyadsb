@@ -1,8 +1,7 @@
-import asyncio
 import datetime
 import logging
-import platform
-
+from starlette.responses import JSONResponse
+import traceback
 from starlette.responses import Response
 from uuid import uuid4, UUID
 from fastapi import FastAPI, Request
@@ -38,6 +37,13 @@ def create_app():
 
 app = create_app()
 logger = logging.getLogger("MAIN")
+
+
+@app.exception_handler(Exception)
+async def exception_handler(request: Request, exc: Exception):
+    logging.error(f"Unhandled error: {exc}")
+    logging.debug(traceback.format_exc())
+    return JSONResponse(status_code=500, content={"message": "Internal Server Error"})
 
 
 @app.middleware("http")

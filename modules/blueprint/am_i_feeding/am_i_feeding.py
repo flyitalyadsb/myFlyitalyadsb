@@ -15,7 +15,7 @@ async def am_i_feeding(request: Request):
     receiver: Receiver = await check_ip(request, session_db)
     beast = False
     mlat = False
-    if receiver and datetime.datetime.now() - receiver.last_seen < datetime.timedelta(seconds=30):
+    if receiver and datetime.datetime.now() - receiver.last_seen < datetime.timedelta(seconds=180):
         beast = True
         if receiver.lat:
             mlat = True
