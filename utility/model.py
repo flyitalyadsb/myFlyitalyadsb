@@ -1,9 +1,9 @@
 import datetime
 
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float, Table, PickleType, Uuid, DateTime, JSON, \
-    StaticPool
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float, Table, PickleType, Uuid, DateTime, JSON
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship, backref
+
 from utility.config import config
 
 DATABASE_URL = config.url_db

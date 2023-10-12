@@ -13,8 +13,7 @@ from utility.forms import LoginForm
 from utility.model import Receiver, SessionData
 
 commonMy_bp = APIRouter()
-templates = Jinja2Templates(
-    directory="modules/blueprint/commonMy/templates")
+templates = Jinja2Templates(directory="modules/blueprint/commonMy/templates")
 commonMy_bp.logger = logging.getLogger(__name__)
 templates.env.globals["get_flashed_messages"] = get_flashed_message
 
@@ -32,9 +31,14 @@ def real_login(request: Request, uuid: str, check_exist: Receiver):
     request.state.ricevitore = check_exist
 
 
-async def check_ip(request: Request, session_db: AsyncSession) -> Receiver:
+def proxy_ip(request: Request):
     forwarded_ip = request.headers.get("X-Forwarded-For")
     client_ip = forwarded_ip if forwarded_ip else request.client.host
+    return client_ip
+
+
+async def check_ip(request: Request, session_db: AsyncSession) -> Receiver:
+    client_ip = proxy_ip(request)
     receiver = await search_receiver_by_ip(session_db, client_ip)
     return receiver
 
@@ -52,7 +56,6 @@ async def dologin(request: Request, next_page: str = None, uuid: str = None):
     if receiver:
         real_login(request, receiver.uuid, receiver)
         return RedirectResponse(url=request.state.session.next)
-
     form = await LoginForm.from_formdata(request)
     if (request.method == 'POST' and await form.validate_on_submit()) or (Request.method == 'GET' and uuid):
         session.logging = False
