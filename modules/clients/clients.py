@@ -9,6 +9,7 @@ import orjson
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from tqdm import tqdm
+
 from utility.config import config
 from utility.model import Receiver
 
@@ -60,9 +61,11 @@ def remove_mlat_duplicates(general_dict: dict):
 
 
 def convert_to_ip(input_string):
+    ip = "0.0.0.0"
+    if input_string in ["mlat-server"]:
+        return ip
     ip_match = re.search(r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b', input_string)
     hostname_match = re.search(r'\b\w+\.\w+\b', input_string)
-    ip = "0.0.0.0"
     if ip_match:
         ip = ip_match.group(0)
         logger.debug(f"IP found: {ip}")

@@ -8,7 +8,6 @@ import uvicorn
 
 from common_py.common import query_updater, print_result
 from modules.add_to_db.add_to_db import add_aircrafts_to_db
-
 from modules.clients.clients import clients
 from modules.remove_unused.remove_unused import remove_unused
 from utility.config import config

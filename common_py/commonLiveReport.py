@@ -5,12 +5,12 @@ from typing import List, Dict, Tuple, Any
 from sqlalchemy import select
 from sqlalchemy.engine import Result
 from tqdm import tqdm
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from common_py.common import query_updater, aircraft_cache
 from utility.config import config
-from utility.model import Aircraft, SessionLocal
+from utility.model import Aircraft
 from utility.type_hint import DatabaseDict
+
 
 def paginate(page, total, per_page) -> List[Dict]:
     total_pages = (total // per_page) + (1 if total % per_page > 0 else 0)
@@ -40,7 +40,6 @@ async def pagination_func(
         aircrafts_func: List[Any],
         live=True
 ) -> Tuple[List[Dict], List[Dict]]:
-
     total = len(aircrafts_func)
     logger.debug(f" len aircrafts passed to pagination_func: {len(aircrafts_func)} ")
     if page != 0:
@@ -67,7 +66,7 @@ async def add_aircraft_to_db(aircraft, session_db):
         serial_number = db_data.serialnumber
         operator_icao = db_data.operatoricao
         aircraft_db = Aircraft(icao=icao.upper(), registration=reg, icao_type_code=type, type=model, operator=operator,
-                             serial_number=serial_number, operator_icao=operator_icao)
+                               serial_number=serial_number, operator_icao=operator_icao)
         session_db.add(aircraft_db)
     else:
         aircraft_db = Aircraft(icao=icao.upper())
@@ -119,4 +118,3 @@ async def get_info_or_add_aircraft_total(session_db, sliced_aircrafts=None):
     query_updater.aircraft_to_be_served[0] = time.time()
     query_updater.aircraft_to_be_served[1] = aircrafts
     return aircrafts
-
