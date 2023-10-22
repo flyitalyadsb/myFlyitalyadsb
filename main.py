@@ -4,6 +4,8 @@ import logging
 import platform
 
 import aiomonitor
+import cProfile
+
 import uvicorn
 
 from common_py.common import query_updater, print_result
@@ -44,12 +46,16 @@ async def run():
         m = aiomonitor.start_monitor(asyncio.get_running_loop())
 
     if config.debug:
+        profiler = cProfile.Profile()
+        profiler.enable()
         asyncio.get_event_loop().set_debug(True)
         m = aiomonitor.start_monitor(asyncio.get_running_loop())
         await asyncio.gather(query_updater.update_query(True), query_updater.update_db())
         session = SessionLocal()
         await add_aircrafts_to_db(session)
         await clients(session)
+        profiler.disable()
+        profiler.print_stats(sort='cumulative')
         return
 
     if platform.system() == "Windows":
@@ -66,6 +72,7 @@ async def run():
         remove_unused(),
         fastapi_start()
     )
+
 
 
 asyncio.run(run())
