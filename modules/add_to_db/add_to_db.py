@@ -27,22 +27,21 @@ async def real_add_aircraft_to_db(session: AsyncSession, receivers_dict: Dict[st
     session.add(flight)
 
 
-async def add_aircrafts_to_db(session: AsyncSession):
-    aircrafts = await get_info_or_add_aircraft_total(session)
-    filter = [aircraft["info"].id for aircraft in aircrafts]
+BATCH_SIZE = 500  # You can adjust this based on your needs
+
+
+async def process_batch(session: AsyncSession, batch_aircrafts, receivers_dict, now):
+    aircraft_ids = [aircraft["info"].id for aircraft in batch_aircrafts]
+
     flight_query = await session.execute(
-        select(Flight).options(selectinload(Flight.receiver)).filter(Flight.aircraft_id.in_(filter)).order_by(
-            Flight.id.desc()))
+        select(Flight).options(selectinload(Flight.receiver)).filter(Flight.aircraft_id.in_(aircraft_ids)).order_by(
+            Flight.id.desc())
+    )
     flight_list: Sequence[Flight] = flight_query.scalars().all()
     flight_dict = {flight.aircraft_id: flight for flight in flight_list}
 
-    result = await session.execute(select(Receiver))
-    receivers = result.scalars().all()
-    receivers_dict = {receiver.uuid[:18]: receiver for receiver in receivers}
-
-    for aircraft in tqdm(aircrafts, desc="Adding FLIGHTS to internal db"):
+    for aircraft in batch_aircrafts:
         if aircraft["info"].id:
-            now = datetime.datetime.fromtimestamp(query_updater.data["now"])
             flight: Flight = flight_dict.get(aircraft["info"].id)
             if flight:
                 add_receivers_to_flight(flight, aircraft, receivers_dict)
@@ -53,19 +52,32 @@ async def add_aircrafts_to_db(session: AsyncSession):
                     else:
                         flight.end = now
                         flight.ended = True
-                else:
-                    continue
             else:
                 await real_add_aircraft_to_db(session, receivers_dict, aircraft, now)
 
         else:
             logger.warning(f"no id: {aircraft}")
             logger.debug(aircraft)
+
     try:
         await session.commit()
     except Exception as e:
         print(f"Error occurred committing: {e}")
-        await session.rollback()  # Roll back the transaction in case of errors
+        await session.rollback()
+
+
+async def add_aircrafts_to_db(session: AsyncSession):
+    now = datetime.datetime.fromtimestamp(query_updater.data["now"])
+    aircrafts = await get_info_or_add_aircraft_total(session)
+
+    result = await session.execute(select(Receiver))
+    receivers = result.scalars().all()
+    receivers_dict = {receiver.uuid[:18]: receiver for receiver in receivers}
+
+    # Split aircraft into batches and process each batch
+    for i in tqdm(range(0, len(aircrafts), BATCH_SIZE), desc="Adding FLIGHTS to internal db"):
+        batch_aircrafts = aircrafts[i:i + BATCH_SIZE]
+        await process_batch(session, batch_aircrafts, receivers_dict, now)
 
 
 def add_receivers_to_flight(flight: Flight, aircraft, receivers_dict: Dict[str, Receiver]):
