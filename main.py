@@ -1,11 +1,12 @@
 import asyncio
 import atexit
+import cProfile
 import logging
+import os
 import platform
 
 import aiomonitor
-import cProfile
-
+import psutil
 import uvicorn
 
 from common_py.common import query_updater, print_result
@@ -21,6 +22,7 @@ result = ""
 atexit.register(print_result, result)
 
 
+
 async def fastapi_start():
     configuration = uvicorn.Config("modules.app.app:app", host=config.host, port=config.port, loop="auto")
     server = uvicorn.Server(configuration)
@@ -34,6 +36,18 @@ async def sync_clients_and_db():
         await add_aircrafts_to_db(session)
         await clients(session)
         await asyncio.sleep(config.clients_and_db_update)
+
+
+async def monitor_usage(interval=30):
+    while True:
+        pid = os.getpid()
+        process = psutil.Process(pid)
+
+        # Calcola l'utilizzo della memoria e della CPU
+        memory_use = process.memory_info().rss  # in bytes
+        cpu_use = process.cpu_percent(interval=1)
+
+        logger.info(f"Memory Usage: {memory_use / (1024 * 1024):.2f} MB, CPU Usage: {cpu_use}%")
 
 
 async def run():
@@ -70,9 +84,9 @@ async def run():
         sync_clients_and_db(),
         query_updater.update_query(),
         remove_unused(),
-        fastapi_start()
+        fastapi_start(),
+        monitor_usage()
     )
-
 
 
 asyncio.run(run())
