@@ -75,11 +75,14 @@ async def add_aircraft_to_db(aircraft, session_db):
 
 
 async def update_cache_for_added_aircrafts(aircrafts_to_add, session_db):
-    for icao in aircrafts_to_add:
-        result: Result = await session_db.execute(
-            select(Aircraft).filter_by(icao=icao.upper()).order_by(Aircraft.id.desc()))
-        info: Aircraft = result.scalars().first()
-        aircraft_cache[icao.lower()] = info.repr()
+    icaos_upper = [icao.upper() for icao in aircrafts_to_add]
+    result: Result = await session_db.execute(
+        select(Aircraft).filter(Aircraft.icao.in_(icaos_upper)).order_by(Aircraft.id.desc()))
+    all_aircrafts_info = result.scalars().all()
+
+    for info in all_aircrafts_info:
+        aircraft_cache[info.icao.lower()] = info.repr()
+
 
 
 async def get_info_or_add_aircraft_total(session_db, sliced_aircrafts=None):

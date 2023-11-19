@@ -4,6 +4,7 @@ import cProfile
 import logging
 import os
 import platform
+import traceback
 
 import aiomonitor
 import psutil
@@ -17,10 +18,11 @@ from utility.config import config
 from utility.model import SessionLocal, setup_database
 
 logger = logging.getLogger("MAIN")
+handler = logging.StreamHandler()
+logger.addHandler(handler)
 
 result = ""
 atexit.register(print_result, result)
-
 
 
 async def fastapi_start():
@@ -30,24 +32,33 @@ async def fastapi_start():
 
 
 async def sync_clients_and_db():
-    session = SessionLocal()
+    session_client = SessionLocal()
+    session_db = SessionLocal()
+
     logger.info("Starting Aircraft_DB and Clients!")
     while True:
-        await add_aircrafts_to_db(session)
-        await clients(session)
+        try:
+            await add_aircrafts_to_db(session_db)
+        finally:
+            pass
+            traceback.print_exc()
+        try:
+            await clients(session_client)
+        finally:
+            pass
+            traceback.print_exc()
         await asyncio.sleep(config.clients_and_db_update)
 
 
-async def monitor_usage(interval=30):
-    while True:
-        pid = os.getpid()
-        process = psutil.Process(pid)
+def monitor_usage(interval=30):
+    pid = os.getpid()
+    process = psutil.Process(pid)
 
-        # Calcola l'utilizzo della memoria e della CPU
-        memory_use = process.memory_info().rss  # in bytes
-        cpu_use = process.cpu_percent(interval=1)
+    # Calcola l'utilizzo della memoria e della CPU
+    memory_use = process.memory_info().rss  # in bytes
+    cpu_use = process.cpu_percent(interval=1)
 
-        logger.info(f"Memory Usage: {memory_use / (1024 * 1024):.2f} MB, CPU Usage: {cpu_use}%")
+    print(f"Memory Usage: {memory_use / (1024 * 1024):.2f} MB, CPU Usage: {cpu_use}%")
 
 
 async def run():
@@ -60,16 +71,16 @@ async def run():
         m = aiomonitor.start_monitor(asyncio.get_running_loop())
 
     if config.debug:
-        profiler = cProfile.Profile()
-        profiler.enable()
-        asyncio.get_event_loop().set_debug(True)
+        # profiler = cProfile.Profile()
+        # profiler.enable()
+        # asyncio.get_event_loop().set_debug(True)
         m = aiomonitor.start_monitor(asyncio.get_running_loop())
         await asyncio.gather(query_updater.update_query(True), query_updater.update_db())
         session = SessionLocal()
         await add_aircrafts_to_db(session)
         await clients(session)
-        profiler.disable()
-        profiler.print_stats(sort='cumulative')
+        # profiler.disable()
+        # profiler.print_stats(sort='cumulative')
         return
 
     if platform.system() == "Windows":
@@ -83,10 +94,9 @@ async def run():
     result = await asyncio.gather(
         sync_clients_and_db(),
         query_updater.update_query(),
-        remove_unused(),
-        fastapi_start(),
-        monitor_usage()
-    )
+        # remove_unused(),
+        fastapi_start())
+    print(result)
 
 
 asyncio.run(run())

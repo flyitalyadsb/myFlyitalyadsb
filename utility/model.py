@@ -1,6 +1,7 @@
 import datetime
 
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float, Table, PickleType, Uuid, DateTime, JSON
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float, Table, PickleType, Uuid, DateTime, JSON, \
+    Index
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship, backref
 
@@ -21,6 +22,7 @@ async def setup_database():
 class Aircraft(Base):
     __tablename__ = "aircraft"
     id = Column(Integer, primary_key=True, autoincrement=True)
+
     icao = Column(String(7), nullable=False)
     registration = Column(String(20))
     icao_type_code = Column(String(20))
@@ -92,13 +94,14 @@ flights_receiver = Table('flights_receiver', Base.metadata,
 class Flight(Base):
     __tablename__ = "flight"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    aircraft_id = Column(Integer, ForeignKey('aircraft.id'), nullable=False)
+    aircraft_id = Column(Integer, ForeignKey('aircraft.id'), nullable=False, index=True)
     aircraft = relationship('Aircraft', backref='flight')
     start = Column(DateTime)
     end = Column(DateTime)
     squawk = Column(String(4))
     ended = Column(Boolean())
     receiver = relationship('Receiver', secondary=flights_receiver, backref=backref('flight', lazy=True))
+    __table_args__ = (Index('idx_aircraft_id_id', 'aircraft_id', 'id'), )
 
 
 class FlightRep:

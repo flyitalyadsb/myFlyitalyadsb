@@ -14,7 +14,8 @@ from utility.config import config
 from utility.model import Receiver
 
 logger = logging.getLogger(__name__)
-
+handler = logging.StreamHandler()
+logger.addHandler(handler)
 
 def remove_duplicates(key, data):
     if key not in data:
@@ -82,6 +83,7 @@ def convert_to_ip(input_string):
 
 
 async def clients(session):
+    logger.info("Clients started")
     receivers_readsb, clients_readsb, clients_mlat, sync_mlat = await asyncio.gather(
         read_file(config.receiver_json),
         read_file(config.clients_json),

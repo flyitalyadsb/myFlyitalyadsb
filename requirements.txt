@@ -16,3 +16,4 @@ aiosqlite
 aiomonitor
 orjson~=3.9.7
 asyncpg
+psutil

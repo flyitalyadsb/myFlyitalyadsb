@@ -1,5 +1,6 @@
 import os
 
+import psutil
 from fastapi import APIRouter
 from fastapi.responses import FileResponse
 
@@ -16,3 +17,4 @@ def get_favicon():
 def get_favicon_from_dir(icon: str):
     return FileResponse(os.path.join("modules", "blueprint", "utility", "templates", "favicon", icon),
                         media_type="image/x-icon")
+
